@@ -1,4 +1,5 @@
 // components/CourseCard.tsx
+"use client"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button"
 
@@ -11,7 +12,7 @@ interface CourseCardProps {
   onButtonClick: () => void;
 }
 
-const CourseCard: React.FC<CourseCardProps> = ({ title, description, image, buttonText, onButtonClick }) => {
+const CourseCard: React.FC<CourseCardProps> = ({ title, description, image, onButtonClick }) => {
   return (
     <Card className="max-w-sm border shadow-md">
       <img src={image} alt={title} className="w-full h-48 object-cover rounded-t-md" />
@@ -25,7 +26,7 @@ const CourseCard: React.FC<CourseCardProps> = ({ title, description, image, butt
         </p>
       </CardContent>
       <CardFooter className="flex justify-end">
-        <Button onClick={onButtonClick}>{buttonText}</Button>
+        <Button onClick={onButtonClick}>buy</Button>
       </CardFooter>
     </Card>
   );

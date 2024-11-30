@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-contract EducationPlatform {
+contract Instructor {
     struct Course {
         uint256 id;
         string title;
@@ -10,7 +10,6 @@ contract EducationPlatform {
         uint256 endTime;
         uint256 price;
         address teacher;
-        address[] students;
     }
 
     uint256 private nextCourseId;
@@ -42,8 +41,7 @@ contract EducationPlatform {
             startTime: _startTime,
             endTime: _endTime,
             price: _price,
-            teacher: msg.sender,
-            students: new address 
+            teacher: msg.sender
         });
 
         teacherCourses[msg.sender].push(courseId);
@@ -83,24 +81,4 @@ contract EducationPlatform {
         return myCourses;
     }
 
-    // Enroll in a course (students)
-    function enrollInCourse(uint256 _courseId) external payable {
-        Course storage course = courses[_courseId];
-        require(block.timestamp < course.startTime, "Course has already started");
-        require(!enrolledStudents[_courseId][msg.sender], "Already enrolled in this course");
-        require(msg.value == course.price, "Incorrect payment amount");
-
-        course.students.push(msg.sender);
-        enrolledStudents[_courseId][msg.sender] = true;
-
-        emit StudentEnrolled(_courseId, msg.sender);
-    }
-
-    // Get students enrolled in a specific course
-    function getEnrolledStudents(uint256 _courseId) external view returns (address[] memory) {
-        Course storage course = courses[_courseId];
-        require(course.teacher == msg.sender, "Only the teacher can view enrolled students");
-
-        return course.students;
-    }
 }

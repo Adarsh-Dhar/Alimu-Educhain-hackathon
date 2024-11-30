@@ -12,10 +12,9 @@ interface CourseCardProps {
   onButtonClick: () => void;
 }
 
-const CourseCard: React.FC<CourseCardProps> = ({ title, description, image, onButtonClick }) => {
+const CourseCard: React.FC<CourseCardProps> = ({ title, description,onButtonClick }) => {
   return (
     <Card className="max-w-sm border shadow-md">
-      <img src={image} alt={title} className="w-full h-48 object-cover rounded-t-md" />
       <CardHeader>
         <CardTitle className="text-lg font-bold">{title}</CardTitle>
         <CardDescription>{description}</CardDescription>

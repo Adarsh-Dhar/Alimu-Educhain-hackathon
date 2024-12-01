@@ -20,7 +20,8 @@ import {
 } from "@/components/ui/popover"
 import { Textarea } from "@/components/ui/textarea"
 import { cn } from "@/lib/utils"
-import { createCourse } from "@/interaction"
+import { interaction } from "@/interaction"
+
 
 
 export function CreateCourse() {
@@ -29,6 +30,15 @@ export function CreateCourse() {
     const [startDate, setStartDate] = React.useState<Date>()
     const [endDate, setEndDate] = React.useState<Date>()
     const [price,setPrice] = React.useState<Number>(0)
+    const {createCourse} = interaction()
+
+    const convertDateToTimestamp = (dateString: string): number => {
+      // Parse the date string to a timestamp in milliseconds
+      const timestamp = Date.parse(dateString);
+      
+      // Convert milliseconds to seconds (Unix timestamp)
+      return Math.floor(timestamp / 1000);
+  };
 
   return (
     <Card className="w-[350px]">
@@ -102,10 +112,18 @@ export function CreateCourse() {
       </CardContent>
       <CardFooter className="flex justify-between">
         <Button onClick={async () => {
+          console.log("hi hi")
+
             if (startDate && endDate) {
-                const tx = await createCourse(title, description, startDate.toString(), endDate.toString(), price.toString())
-                console.log("tx", tx)
+          console.log("hi")
+              const start_date = convertDateToTimestamp(startDate.toString())
+              const end_date = convertDateToTimestamp(endDate.toString())
+                await createCourse(title, description, start_date.toString(), end_date.toString(), price.toString())
+                
+            }else {
+              console.log("errror in creating course")
             }
+            console.log("yo")
         }}>Create</Button>
       </CardFooter>
     </Card>

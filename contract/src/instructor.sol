@@ -75,16 +75,13 @@ contract Instructor {
     // New function to buy a course
     function buyCourse(uint256 _id) external payable {
         // Retrieve the course
-        Course storage course = courses[_id];
-        
-        // Check if course exists
-        require(course.id != 0, "Course does not exist");
-        
+        // Course storage course = courses[_id];
+                
         // Ensure the student hasn't already enrolled
         require(!enrolledStudents[_id][msg.sender], "Already enrolled in this course");
         
         // Check if the correct amount is paid
-        require(msg.value >= course.price, "Insufficient payment");
+        // require(msg.value == course.price, "Insufficient payment");
         
         // Mark the student as enrolled
         enrolledStudents[_id][msg.sender] = true;
@@ -95,10 +92,10 @@ contract Instructor {
         // Emit event
         emit StudentEnrolled(_id, msg.sender);
         
-        // Refund excess payment
-        if (msg.value > course.price) {
-            payable(msg.sender).transfer(msg.value - course.price);
-        }
+        // // Refund excess payment
+        // if (msg.value > course.price) {
+        //     payable(msg.sender).transfer(msg.value - course.price);
+        // }
     }
 
     // New function to get courses a student has enrolled in

@@ -13,15 +13,14 @@ contract Instructor {
     }
 
     uint256 private nextCourseId;
-    mapping(uint256 => Course) private courses; // Maps course ID to Course
-    mapping(address => uint256[]) private teacherCourses; // Maps teacher address to their course IDs
-    mapping(uint256 => mapping(address => bool)) private enrolledStudents; // Tracks enrollment per course
+    mapping(uint256 => Course) private courses;
+    mapping(address => uint256[]) private teacherCourses;
+    mapping(uint256 => mapping(address => bool)) private enrolledStudents;
 
     event CourseCreated(uint256 courseId, string title, address teacher);
     event CourseDeleted(uint256 courseId, address teacher);
     event StudentEnrolled(uint256 courseId, address student);
 
-    // Create a new course
     function createCourse(
         string memory _title,
         string memory _description,
@@ -30,7 +29,6 @@ contract Instructor {
         uint256 _price
     ) external {
         require(_startTime < _endTime, "Start time must be before end time");
-
         uint256 courseId = nextCourseId;
         nextCourseId++;
 
@@ -45,11 +43,9 @@ contract Instructor {
         });
 
         teacherCourses[msg.sender].push(courseId);
-
         emit CourseCreated(courseId, _title, msg.sender);
     }
 
-    // Delete a course (only by the teacher who created it)
     function deleteCourse(uint256 _courseId) external {
         Course storage course = courses[_courseId];
         require(course.teacher == msg.sender, "Only the teacher can delete this course");
@@ -65,13 +61,11 @@ contract Instructor {
         }
 
         delete courses[_courseId];
-
         emit CourseDeleted(_courseId, msg.sender);
     }
 
-    // Get all courses created by the calling teacher
-    function getMyCourses() external view returns (Course[] memory) {
-        uint256[] memory courseIds = teacherCourses[msg.sender];
+    function getMyCourses(address _instructor) external view returns (Course[] memory) {
+        uint256[] memory courseIds = teacherCourses[_instructor];
         Course[] memory myCourses = new Course[](courseIds.length);
 
         for (uint256 i = 0; i < courseIds.length; i++) {
@@ -80,5 +74,4 @@ contract Instructor {
 
         return myCourses;
     }
-
 }

@@ -1,11 +1,11 @@
 import { useEffect, useState } from "react";
-import { getMyCoursesInstructor,deleteCourse } from "@/interaction";
+import { interaction } from "@/interaction";
 import { Button } from "./ui/button";
 import Link from "next/link";
 
 export const GetMyCoursesInstructor: React.FC = () => {
   const [courses, setCourses] = useState<any[]>([]); // Update the type based on the actual structure of your courses
-
+  const {getMyCoursesInstructor, deleteCourse} = interaction()
   const renderCourses = async () => {
     try {
       const tx = await getMyCoursesInstructor();

@@ -1,17 +1,16 @@
-import Link from "next/link";
 import { Button } from "./ui/button";
 import {
     NavigationMenu,
     NavigationMenuContent,
-    NavigationMenuIndicator,
     NavigationMenuItem,
     NavigationMenuLink,
     NavigationMenuList,
     NavigationMenuTrigger,
-    NavigationMenuViewport,
   } from "@/components/ui/navigation-menu";
+  import { interaction } from "@/interaction";
   
   export const Navbar = () => {
+    const {connectWallet} = interaction()
     return (
       <div className="flex items-center space-x-6 bg-gray-100 p-4">
         <NavigationMenu>
@@ -46,7 +45,9 @@ import {
           <NavigationMenuItem>
 
             <NavigationMenuLink>
-              <Button>Connect Wallet</Button>
+              <Button onClick={async () => {
+                await connectWallet()
+              }}>Connect Wallet</Button>
             </NavigationMenuLink>
 
         </NavigationMenuItem>

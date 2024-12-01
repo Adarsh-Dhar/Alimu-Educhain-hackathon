@@ -1,6 +1,7 @@
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { interaction } from "@/interaction";
-import { Button } from "./ui/button";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import Link from "next/link";
 
 // Define a type for the Course structure
@@ -14,20 +15,166 @@ interface Course {
   teacher: string;
 }
 
+// Timestamp formatting utility
+export function formatUnixTimestamp(
+  timestamp: number | bigint, 
+  options: {
+    format?: 'full' | 'date' | 'time' | 'relative';
+    locale?: string;
+  } = {}
+): string {
+  // Ensure timestamp is a number and convert from seconds to milliseconds
+  const timestampMs = Number(timestamp) * 1000;
+  
+  // Validate timestamp
+  if (isNaN(timestampMs)) {
+    return 'Invalid Timestamp';
+  }
+
+  const {
+    format = 'date',
+    locale = 'en-US'
+  } = options;
+
+  const date = new Date(timestampMs);
+
+  // Different formatting based on option
+  switch (format) {
+    case 'full':
+      return date.toLocaleString(locale, {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      });
+
+    case 'date':
+      return date.toLocaleDateString(locale, {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      });
+
+    case 'time':
+      return date.toLocaleTimeString(locale, {
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: true
+      });
+
+    case 'relative':
+      return getRelativeTimeString(timestampMs, locale);
+
+    default:
+      return date.toString();
+  }
+}
+
+// Relative time string utility
+function getRelativeTimeString(timestampMs: number, locale: string): string {
+  const rtf = new Intl.RelativeTimeFormat(locale, { numeric: 'auto' });
+  const now = Date.now();
+  const diffMs = timestampMs - now;
+
+  const units: { unit: Intl.RelativeTimeFormatUnit; ms: number }[] = [
+    { unit: 'year', ms: 31536000000 },
+    { unit: 'month', ms: 2628000000 },
+    { unit: 'week', ms: 604800000 },
+    { unit: 'day', ms: 86400000 },
+    { unit: 'hour', ms: 3600000 },
+    { unit: 'minute', ms: 60000 },
+    { unit: 'second', ms: 1000 }
+  ];
+
+  for (const { unit, ms } of units) {
+    if (Math.abs(diffMs) >= ms) {
+      return rtf.format(Math.round(diffMs / ms), unit);
+    }
+  }
+
+  return 'just now';
+}
+
+// CourseCard component
+const CourseCard: React.FC<Course & { onDelete?: (id: string) => void }> = ({ 
+  id, 
+  title, 
+  description, 
+  startTime, 
+  endTime, 
+  price, 
+  teacher, 
+  onDelete 
+}) => {
+  return (
+    <Card className="max-w-sm border shadow-md hover:shadow-lg transition-shadow duration-300">
+      <CardHeader>
+        <CardTitle className="text-lg font-bold">{title}</CardTitle>
+        <CardDescription className="line-clamp-2">{description}</CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-2 text-sm text-gray-600">
+        <div>
+          <strong>Start:</strong> {formatUnixTimestamp(startTime, { format: 'full' })}
+        </div>
+        <div>
+          <strong>End:</strong> {formatUnixTimestamp(endTime, { format: 'full' })}
+        </div>
+        <div>
+          <strong>Price:</strong> {price.toString()} ETH
+        </div>
+        
+      </CardContent>
+      <CardFooter className="flex justify-between items-center">
+        <Button variant="outline" size="sm">Edit</Button>
+        <Button 
+          variant="destructive" 
+          size="sm" 
+          onClick={() => onDelete && onDelete(id.toString())}
+        >
+          Delete
+        </Button>
+      </CardFooter>
+    </Card>
+  );
+};
+
+// Main Courses Component
 export const GetMyCoursesInstructor: React.FC = () => {
-  const [courses, setCourses] = useState<Course[]>([]); 
-  const {getMyCoursesInstructor, deleteCourse} = interaction()
+  const [courses, setCourses] = useState<Course[]>([]);
+  const { getMyCoursesInstructor, deleteCourse } = interaction();
 
   const renderCourses = async () => {
     try {
       const tx = await getMyCoursesInstructor();
-      console.log("tx", tx);
       if (!tx) {
-        return null
+        return null;
       }
-      setCourses(tx); 
+      
+      // Transform the tx array into Course objects
+      const transformedCourses = tx.map((item: any) => ({
+        id: item[0],
+        title: item[1],
+        description: item[2],
+        startTime: item[3],  // Corrected to use index 3
+        endTime: item[4],    // Corrected to use index 4
+        price: item[5],
+        teacher: item[6]
+      }));
+
+      console.log("Transformed Courses:", transformedCourses);
+      setCourses(transformedCourses);
     } catch (error) {
       console.error("Error fetching courses:", error);
+    }
+  };
+
+  const handleDeleteCourse = async (courseId: string) => {
+    try {
+      await deleteCourse(courseId);
+      // Refresh the courses list after deletion
+      await renderCourses();
+    } catch (error) {
+      console.error("Error deleting course:", error);
     }
   };
 
@@ -36,40 +183,31 @@ export const GetMyCoursesInstructor: React.FC = () => {
   }, []);
 
   return (
-    <div>
-      <h1>My Courses</h1>
-      <Link href="/instructor/create">
-        <Button>Create New</Button>
-      </Link>
-      {courses.length === 0 ? (
-        <p>Loading courses...</p>
-      ) : (
-        <ul>
-          {courses.map((course, index) => (
-            <li key={index}>
-              <h2>{course.title}</h2>
-              <p>{course.description}</p>
-              <p>
-                <strong>Start:</strong> {new Date(Number(course.startTime) * 1000).toLocaleString()}
-              </p>
-              <p>
-                <strong>End:</strong> {new Date(Number(course.endTime) * 1000).toLocaleString()}
-              </p>
-              <p>
-                <strong>Price:</strong> {course.price.toString()} ETH
-              </p>
-              <p>
-                <strong>Instructor:</strong> {course.teacher}
-              </p>
-            </li>
-          ))}
-        </ul>
-      )}
-      <div>
-        <Button onClick={() => {
-          deleteCourse("0")
-        }}>Delete</Button>
+    <div className="container mx-auto px-4 py-6">
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl font-bold">My Courses</h1>
+        <Link href="/instructor/create">
+          <Button>Create New Course</Button>
+        </Link>
       </div>
+
+      {courses.length === 0 ? (
+        <div className="text-center text-gray-500">
+          <p>No courses available. Create your first course!</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {courses.map((course) => (
+            <CourseCard 
+              key={course.id.toString()} 
+              {...course} 
+              onDelete={handleDeleteCourse}
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 };
+
+export default GetMyCoursesInstructor;

@@ -167,7 +167,7 @@ export const interaction = () => {
             if (typeof contract.getMyCourses === 'function') {
                 const response = await contract.getMyCourses(address);
                 
-                console.log('My Courses:', response);
+                console.log('My Courses:', response[0][3]);
                 return response;
             } else {
                 console.error('getMyCourses is not a function on the contract');

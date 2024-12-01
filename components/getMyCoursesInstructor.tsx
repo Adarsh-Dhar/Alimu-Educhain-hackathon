@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
-import { getMyCoursesInstructor } from "@/interaction";
+import { getMyCoursesInstructor,deleteCourse } from "@/interaction";
+import { Button } from "./ui/button";
+import Link from "next/link";
 
 export const GetMyCoursesInstructor: React.FC = () => {
   const [courses, setCourses] = useState<any[]>([]); // Update the type based on the actual structure of your courses
@@ -24,6 +26,10 @@ export const GetMyCoursesInstructor: React.FC = () => {
   return (
     <div>
       <h1>My Courses</h1>
+      <Link href={"/instructor/create"}>
+      <Button>Create New</Button>
+
+      </Link>
       {courses.length === 0 ? (
         <p>Loading courses...</p>
       ) : (
@@ -48,6 +54,12 @@ export const GetMyCoursesInstructor: React.FC = () => {
           ))}
         </ul>
       )}
+      <div>
+      <Button onClick={() => {
+        deleteCourse("0")
+      }}>Delete</Button>
+
+      </div>
     </div>
   );
 };

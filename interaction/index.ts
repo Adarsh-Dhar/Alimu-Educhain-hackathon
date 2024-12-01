@@ -1,8 +1,8 @@
 import { ethers } from 'ethers';
 import { useStore } from '@/zustand';
 
-const instructor_address = "0x592D312Cd88fE9b52B8fe4C33D155e1244b481A9";
-const instructor_abi = [{"type":"function","name":"buyCourse","inputs":[{"name":"_id","type":"uint256","internalType":"uint256"}],"outputs":[],"stateMutability":"payable"},{"type":"function","name":"createCourse","inputs":[{"name":"_title","type":"string","internalType":"string"},{"name":"_description","type":"string","internalType":"string"},{"name":"_startTime","type":"uint256","internalType":"uint256"},{"name":"_endTime","type":"uint256","internalType":"uint256"},{"name":"_price","type":"uint256","internalType":"uint256"}],"outputs":[],"stateMutability":"nonpayable"},{"type":"function","name":"deleteCourse","inputs":[{"name":"_courseId","type":"uint256","internalType":"uint256"}],"outputs":[],"stateMutability":"nonpayable"},{"type":"function","name":"getEnrolledStudents","inputs":[{"name":"_courseId","type":"uint256","internalType":"uint256"}],"outputs":[{"name":"","type":"address[]","internalType":"address[]"}],"stateMutability":"view"},{"type":"function","name":"getMyCoursesInstructor","inputs":[],"outputs":[{"name":"","type":"tuple[]","internalType":"struct Instructor.Course[]","components":[{"name":"id","type":"uint256","internalType":"uint256"},{"name":"title","type":"string","internalType":"string"},{"name":"description","type":"string","internalType":"string"},{"name":"startTime","type":"uint256","internalType":"uint256"},{"name":"endTime","type":"uint256","internalType":"uint256"},{"name":"price","type":"uint256","internalType":"uint256"},{"name":"teacher","type":"address","internalType":"address"}]}],"stateMutability":"view"},{"type":"function","name":"getMyCoursesLearner","inputs":[],"outputs":[{"name":"","type":"tuple[]","internalType":"struct Instructor.Course[]","components":[{"name":"id","type":"uint256","internalType":"uint256"},{"name":"title","type":"string","internalType":"string"},{"name":"description","type":"string","internalType":"string"},{"name":"startTime","type":"uint256","internalType":"uint256"},{"name":"endTime","type":"uint256","internalType":"uint256"},{"name":"price","type":"uint256","internalType":"uint256"},{"name":"teacher","type":"address","internalType":"address"}]}],"stateMutability":"view"},{"type":"function","name":"removeCourse","inputs":[{"name":"_id","type":"uint256","internalType":"uint256"}],"outputs":[],"stateMutability":"nonpayable"},{"type":"event","name":"CourseCreated","inputs":[{"name":"courseId","type":"uint256","indexed":false,"internalType":"uint256"},{"name":"title","type":"string","indexed":false,"internalType":"string"},{"name":"teacher","type":"address","indexed":false,"internalType":"address"}],"anonymous":false},{"type":"event","name":"CourseDeleted","inputs":[{"name":"courseId","type":"uint256","indexed":false,"internalType":"uint256"},{"name":"teacher","type":"address","indexed":false,"internalType":"address"}],"anonymous":false},{"type":"event","name":"CourseRemoved","inputs":[{"name":"courseId","type":"uint256","indexed":false,"internalType":"uint256"},{"name":"student","type":"address","indexed":false,"internalType":"address"}],"anonymous":false},{"type":"event","name":"StudentEnrolled","inputs":[{"name":"courseId","type":"uint256","indexed":false,"internalType":"uint256"},{"name":"student","type":"address","indexed":false,"internalType":"address"}],"anonymous":false}];
+const instructor_address = "0xb4A0d1a016158b99b1eDfB67e7994DE3a78C0249";
+const instructor_abi = [{"type":"function","name":"buyCourse","inputs":[{"name":"_id","type":"uint256","internalType":"uint256"}],"outputs":[],"stateMutability":"payable"},{"type":"function","name":"createCourse","inputs":[{"name":"_title","type":"string","internalType":"string"},{"name":"_description","type":"string","internalType":"string"},{"name":"_startTime","type":"uint256","internalType":"uint256"},{"name":"_endTime","type":"uint256","internalType":"uint256"},{"name":"_price","type":"uint256","internalType":"uint256"}],"outputs":[],"stateMutability":"nonpayable"},{"type":"function","name":"deleteCourse","inputs":[{"name":"_courseId","type":"uint256","internalType":"uint256"}],"outputs":[],"stateMutability":"nonpayable"},{"type":"function","name":"getAllCourses","inputs":[],"outputs":[{"name":"","type":"tuple[]","internalType":"struct Instructor.Course[]","components":[{"name":"id","type":"uint256","internalType":"uint256"},{"name":"title","type":"string","internalType":"string"},{"name":"description","type":"string","internalType":"string"},{"name":"startTime","type":"uint256","internalType":"uint256"},{"name":"endTime","type":"uint256","internalType":"uint256"},{"name":"price","type":"uint256","internalType":"uint256"},{"name":"teacher","type":"address","internalType":"address"}]}],"stateMutability":"view"},{"type":"function","name":"getEnrolledStudents","inputs":[{"name":"_courseId","type":"uint256","internalType":"uint256"}],"outputs":[{"name":"","type":"address[]","internalType":"address[]"}],"stateMutability":"view"},{"type":"function","name":"getMyCoursesInstructor","inputs":[],"outputs":[{"name":"","type":"tuple[]","internalType":"struct Instructor.Course[]","components":[{"name":"id","type":"uint256","internalType":"uint256"},{"name":"title","type":"string","internalType":"string"},{"name":"description","type":"string","internalType":"string"},{"name":"startTime","type":"uint256","internalType":"uint256"},{"name":"endTime","type":"uint256","internalType":"uint256"},{"name":"price","type":"uint256","internalType":"uint256"},{"name":"teacher","type":"address","internalType":"address"}]}],"stateMutability":"view"},{"type":"function","name":"getMyCoursesLearner","inputs":[],"outputs":[{"name":"","type":"tuple[]","internalType":"struct Instructor.Course[]","components":[{"name":"id","type":"uint256","internalType":"uint256"},{"name":"title","type":"string","internalType":"string"},{"name":"description","type":"string","internalType":"string"},{"name":"startTime","type":"uint256","internalType":"uint256"},{"name":"endTime","type":"uint256","internalType":"uint256"},{"name":"price","type":"uint256","internalType":"uint256"},{"name":"teacher","type":"address","internalType":"address"}]}],"stateMutability":"view"},{"type":"function","name":"removeCourse","inputs":[{"name":"_id","type":"uint256","internalType":"uint256"}],"outputs":[],"stateMutability":"nonpayable"},{"type":"event","name":"CourseCreated","inputs":[{"name":"courseId","type":"uint256","indexed":false,"internalType":"uint256"},{"name":"title","type":"string","indexed":false,"internalType":"string"},{"name":"teacher","type":"address","indexed":false,"internalType":"address"}],"anonymous":false},{"type":"event","name":"CourseDeleted","inputs":[{"name":"courseId","type":"uint256","indexed":false,"internalType":"uint256"},{"name":"teacher","type":"address","indexed":false,"internalType":"address"}],"anonymous":false},{"type":"event","name":"CourseRemoved","inputs":[{"name":"courseId","type":"uint256","indexed":false,"internalType":"uint256"},{"name":"student","type":"address","indexed":false,"internalType":"address"}],"anonymous":false},{"type":"event","name":"StudentEnrolled","inputs":[{"name":"courseId","type":"uint256","indexed":false,"internalType":"uint256"},{"name":"student","type":"address","indexed":false,"internalType":"address"}],"anonymous":false}];
 
 export const interaction = () => {
     // Safely get store state
@@ -167,7 +167,7 @@ export const interaction = () => {
             if (typeof contract.getMyCoursesInstructor === 'function') {
                 const response = await contract.getMyCoursesInstructor();
                 
-                console.log('My Courses:', response[0][3]);
+                console.log('My Courses:', response);
                 return response;
             } else {
                 console.error('getMyCourses is not a function on the contract');
@@ -179,11 +179,125 @@ export const interaction = () => {
         }
     };
 
+    const buyCourse = async (courseId: string) => {
+        try {
+            // Initialize contract
+            const contract = await initEthereum();
+            
+            if (!contract) {
+                console.log("MetaMask is not installed!");
+                return null;
+            }
+            
+            // Check if deleteCourse method exists
+            if (typeof contract.buyCourse === 'function') {
+                const response = await contract.buyCourse(courseId);
+                
+                console.log('Course Bought:', response);
+                return response;
+            } else {
+                console.error('buyCourse is not a function on the contract');
+                return null;
+            }
+        } catch (error) {
+            console.error("Error buying course:", error);
+            return null;
+        }
+    };
+
+    const removeCourse = async (courseId: string) => {
+        try {
+            // Initialize contract
+            const contract = await initEthereum();
+            
+            if (!contract) {
+                console.log("MetaMask is not installed!");
+                return null;
+            }
+            
+            // Check if deleteCourse method exists
+            if (typeof contract.removeCourse === 'function') {
+                const response = await contract.removeCourse(courseId);
+                
+                console.log('Course Removed:', response);
+                return response;
+            } else {
+                console.error('removeCourse is not a function on the contract');
+                return null;
+            }
+        } catch (error) {
+            console.error("Error deleting course:", error);
+            return null;
+        }
+    };
+
+    const getMyCoursesLearner = async () => {
+        try {
+            // Initialize contract
+            const contract = await initEthereum();
+            const {address} = await getStoreState()
+            
+            if (!contract) {
+                console.log("MetaMask is not installed!");
+                return null;
+            }
+            
+            // Check if getMyCourses method exists
+            if (typeof contract.getMyCoursesLearner === 'function') {
+                const response = await contract.getMyCoursesLearner();
+                
+                console.log('My Courses:', response);
+                return response;
+            } else {
+                console.error('getMyCourses is not a function on the contract');
+                return null;
+            }
+        } catch (error) {
+            console.error("Error getting courses:", error);
+            return null;
+        }
+    };
+
+    const getAllCourses = async () => {
+        try {
+            // Initialize contract
+            const contract = await initEthereum();
+            console.log(contract)
+            
+            if (!contract) {
+                console.log("MetaMask is not installed!");
+                return null;
+            }
+            console.log("hello")
+            // Check if getMyCourses method exists
+            if (typeof contract.getAllCourses === 'function') {
+                console.log("hello2")
+                const response = await contract.getAllCourses();
+            console.log("hello3")
+                
+                console.log('My Courses:', response);
+                return response;
+            } else {
+                console.error('getMyCourses is not a function on the contract');
+                return null;
+            }
+
+        } catch (error) {
+            console.error("Error getting courses:", error);
+            return null;
+        }
+    };
+
+
     // Return methods
     return {
         connectWallet,
         createCourse,
         deleteCourse,
-        getMyCoursesInstructor
+        getMyCoursesInstructor,
+        buyCourse,
+        removeCourse,
+        getMyCoursesLearner,
+        getAllCourses
     };
 };

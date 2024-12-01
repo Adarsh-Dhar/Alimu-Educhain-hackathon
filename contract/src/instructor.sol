@@ -154,4 +154,16 @@ contract Instructor {
         
         return courseStudents[_courseId];
     }
+
+    function getAllCourses() external view returns (Course[] memory) {
+        // Create an array of courses with the total number of courses created
+        Course[] memory allCourses = new Course[](nextCourseId);
+        
+        // Populate the array with all courses
+        for (uint256 i = 0; i < nextCourseId; i++) {
+            allCourses[i] = courses[i];
+        }
+        
+        return allCourses;
+    }
 }

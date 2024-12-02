@@ -1,104 +1,155 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import {IERC20} from "../lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
-import {ERC20} from "../lib/openzeppelin-contracts/contracts/token/ERC20/ERC20.sol";
-import {ReentrancyGuard} from "../lib/openzeppelin-contracts/contracts/utils/ReentrancyGuard.sol";
+import "../lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
+import "../lib/openzeppelin-contracts/contracts/access/Ownable.sol";
+import "../lib/openzeppelin-contracts/contracts/utils/ReentrancyGuard.sol";
 
-
-// Aave V3 Pool Interface
+// Aave V3 Interfaces
 interface IAavePool {
     function supply(address asset, uint256 amount, address onBehalfOf, uint16 referralCode) external;
     function withdraw(address asset, uint256 amount, address to) external returns (uint256);
+    function getReserveData(address asset) external view returns (
+        uint256 configuration,
+        uint256 liquidityIndex,
+        uint256 variableBorrowIndex,
+        uint256 currentLiquidityRate,
+        uint256 currentVariableBorrowRate,
+        uint256 currentStableBorrowRate,
+        uint256 lastUpdateTimestamp,
+        address aTokenAddress,
+        address stableDebtTokenAddress,
+        address variableDebtTokenAddress,
+        address interestRateStrategyAddress,
+        uint256 id
+    );
 }
 
-contract AaveYieldStaking is ReentrancyGuard {
-    // Aave V3 Pool Address (this is the Ethereum mainnet address, change for other networks)
-    IAavePool public constant AAVE_POOL = IAavePool(0x87870Bca3F3fD6335C3F4ce8392D69350B4fA4E2);
+interface IWETH {
+    function deposit() external payable;
+    function withdraw(uint256 amount) external;
+}
 
-    // Token to be staked
-    IERC20 public stakingToken;
+contract AaveYieldCaptureProtocol is Ownable, ReentrancyGuard {
+    // Mainnet addresses (replace with appropriate network addresses)
+    address public constant AAVE_POOL_ADDRESS = 0x87870Bca3F3fD6335C3F4ce8392D69350B4fA4E2;
+    address public constant WETH_ADDRESS = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
 
-    // Address to receive yields
+    // Aave Pool contract
+    IAavePool public aavePool;
+    IWETH public weth;
+
+    // Staking tracking
+    mapping(address => uint256) public userStakes;
+    uint256 public totalStaked;
+
+    // Yield recipient
     address public yieldRecipient;
 
-    // Struct to track user stakes
-    struct StakeInfo {
-        uint256 amount;
-        uint256 stakedAt;
-    }
-
-    // User stakes
-    mapping(address => StakeInfo) public stakes;
+    // Staking parameters
+    uint256 public constant MINIMUM_STAKE = 0.01 ether;
 
     // Events
     event Staked(address indexed user, uint256 amount);
     event Unstaked(address indexed user, uint256 amount);
-    event YieldRecipientUpdated(address newRecipient);
+    event YieldCaptured(uint256 totalYield);
 
-    constructor(address _stakingToken, address _yieldRecipient) {
-        stakingToken = IERC20(_stakingToken);
+    constructor(address _yieldRecipient) {
+        require(_yieldRecipient != address(0), "Invalid yield recipient");
         yieldRecipient = _yieldRecipient;
+        
+        // Initialize Aave Pool and WETH contracts
+        aavePool = IAavePool(AAVE_POOL_ADDRESS);
+        weth = IWETH(WETH_ADDRESS);
     }
 
-    // Stake tokens in Aave
-    function stake(uint256 amount) external nonReentrant {
-        // Ensure user hasn't already staked
-        require(stakes[msg.sender].amount == 0, "Already staked");
+    // Stake function with Aave integration
+    function stake() external payable nonReentrant {
+        require(msg.value >= MINIMUM_STAKE, "Stake below minimum");
         
-        // Transfer tokens from user to contract
-        require(stakingToken.transferFrom(msg.sender, address(this), amount), "Transfer failed");
+        // Convert ETH to WETH
+        weth.deposit{value: msg.value}();
         
-        // Approve Aave pool to spend tokens
-        require(stakingToken.approve(address(AAVE_POOL), amount), "Approval failed");
+        // Approve Aave Pool to spend WETH
+        IERC20(WETH_ADDRESS).approve(AAVE_POOL_ADDRESS, msg.value);
         
-        // Supply tokens to Aave pool
-        AAVE_POOL.supply(address(stakingToken), amount, address(this), 0);
+        // Supply to Aave Pool
+        aavePool.supply(WETH_ADDRESS, msg.value, address(this), 0);
         
-        // Record stake
-        stakes[msg.sender] = StakeInfo({
-            amount: amount,
-            stakedAt: block.timestamp
-        });
+        // Track user stake
+        userStakes[msg.sender] += msg.value;
+        totalStaked += msg.value;
 
-        emit Staked(msg.sender, amount);
+        emit Staked(msg.sender, msg.value);
     }
 
-    // Unstake tokens from Aave
-    function unstake() external nonReentrant {
-        StakeInfo memory userStake = stakes[msg.sender];
-        require(userStake.amount > 0, "No active stake");
+    // Unstake function
+    function unstake(uint256 amount) external nonReentrant {
+        require(userStakes[msg.sender] >= amount, "Insufficient stake");
 
-        // Withdraw from Aave pool
-        uint256 withdrawnAmount = AAVE_POOL.withdraw(address(stakingToken), userStake.amount, address(this));
-        
-        // Transfer original amount back to user
-        require(stakingToken.transfer(msg.sender, withdrawnAmount), "Transfer back failed");
-        
-        // Clear stake
-        delete stakes[msg.sender];
+        // Update stake tracking
+        userStakes[msg.sender] -= amount;
+        totalStaked -= amount;
 
-        emit Unstaked(msg.sender, withdrawnAmount);
+        // Withdraw from Aave Pool
+        uint256 withdrawnAmount = aavePool.withdraw(WETH_ADDRESS, amount, address(this));
+        
+        // Convert WETH back to ETH
+        weth.withdraw(withdrawnAmount);
+
+        // Transfer back to user
+        payable(msg.sender).transfer(withdrawnAmount);
+
+        emit Unstaked(msg.sender, amount);
     }
 
-    // Withdraw accumulated yields (can only be called by owner)
-    function withdrawYields() external  {
-        // Calculate yields by checking contract's token balance 
-        uint256 contractBalance = stakingToken.balanceOf(address(this));
-        uint256 userStakedAmount = stakes[msg.sender].amount;
-        uint256 yields = contractBalance - userStakedAmount;
+    // Capture yield from Aave
+    function captureYield() external nonReentrant {
+        // Get current reserve data for WETH
+        (,,,uint256 liquidityRate,,,,,,,,) = aavePool.getReserveData(WETH_ADDRESS);
+        
+        // Calculate potential yield (liquidityRate is in RAY units, divide accordingly)
+        uint256 totalStakedInWETH = IERC20(WETH_ADDRESS).balanceOf(address(this));
+        uint256 potentialYield = (totalStakedInWETH * liquidityRate) / 1e27;
 
-        // Transfer yields to yield recipient
-        require(stakingToken.transfer(yieldRecipient, yields), "Yield transfer failed");
+        // Withdraw yield (if any)
+        if (potentialYield > 0) {
+            aavePool.withdraw(WETH_ADDRESS, potentialYield, address(this));
+            
+            // Convert WETH yield to ETH
+            weth.withdraw(potentialYield);
+
+            // Send yield to recipient
+            payable(yieldRecipient).transfer(potentialYield);
+
+            emit YieldCaptured(potentialYield);
+        }
     }
 
-    // Update yield recipient
-    function updateYieldRecipient(address _newRecipient) external  {
+    // View current yield rate
+    function getCurrentYieldRate() external view returns (uint256) {
+        (,,,uint256 liquidityRate,,,,,,,,) = aavePool.getReserveData(WETH_ADDRESS);
+        return liquidityRate / 1e9; // Convert to more readable format
+    }
+
+    // Change yield recipient
+    function changeYieldRecipient(address _newRecipient) external onlyOwner {
         require(_newRecipient != address(0), "Invalid recipient");
         yieldRecipient = _newRecipient;
-        emit YieldRecipientUpdated(_newRecipient);
+    }
+
+    // Allow receiving ETH
+    receive() external payable {
+        stake();
     }
 
     // Fallback function
-    receive() external payable {}
+    fallback() external payable {
+        stake();
+    }
+
+    // Withdraw stuck funds (emergency)
+    function emergencyWithdraw() external onlyOwner {
+        payable(owner()).transfer(address(this).balance);
+    }
 }

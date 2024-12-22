@@ -1,7 +1,7 @@
 pragma solidity 0.8.28;
 
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "./PmknToken.sol";
+import "../lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
+import "./AlimuToken.sol";
 contract PmknFarm {
 mapping(address => uint256) public stakingBalance;
 mapping(address => bool) public isStaking;
@@ -9,16 +9,16 @@ mapping(address => uint256) public startTime;
 mapping(address => uint256) public pmknBalance;
 string public name = "PmknFarm";
 IERC20 public daiToken;
- PmknToken public pmknToken;
+ AlimuToken public alimuToken;
 event Stake(address indexed from, uint256 amount);
 event Unstake(address indexed from, uint256 amount);
 event YieldWithdraw(address indexed to, uint256 amount);
 constructor(
 IERC20 _daiToken,
- PmknToken _pmknToken
+ AlimuToken _alimuToken
  ) {
  daiToken = _daiToken;
- pmknToken = _pmknToken;
+ alimuToken = _alimuToken;
  }
 function stake(uint256 amount) public {
 require(
@@ -78,7 +78,7 @@ uint256 oldBalance = pmknBalance[msg.sender];
  toTransfer += oldBalance;
  }
  startTime[msg.sender] = block.timestamp;
- pmknToken.mint(msg.sender, toTransfer);
+ alimuToken.mint(msg.sender, toTransfer);
 emit YieldWithdraw(msg.sender, toTransfer);
  }
 }

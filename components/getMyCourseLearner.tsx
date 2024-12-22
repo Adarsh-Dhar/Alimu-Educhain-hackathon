@@ -185,8 +185,8 @@ export const GetMyCoursesLearner: React.FC = () => {
     <div className="container mx-auto px-4 py-6">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">My Courses</h1>
-        <Link href="/instructor/create">
-          <Button>Create New Course</Button>
+        <Link href="/learner/buy">
+          <Button>Buy New Course</Button>
         </Link>
       </div>
 

@@ -103,7 +103,6 @@ const CourseCard: React.FC<Course & { onDelete?: (id: string) => void }> = ({
   startTime, 
   endTime, 
   price, 
-  teacher, 
   onDelete 
 }) => {
   return (

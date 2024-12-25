@@ -1,27 +1,34 @@
 import { Button } from "./ui/button";
 import {
     NavigationMenu,
-    NavigationMenuContent,
+    // NavigationMenuContent,
     NavigationMenuItem,
     NavigationMenuLink,
     NavigationMenuList,
-    NavigationMenuTrigger,
+    // NavigationMenuTrigger,
+    navigationMenuTriggerStyle
   } from "@/components/ui/navigation-menu";
   import { interaction } from "@/interaction";
+  import Link from "next/link"
   
   export const Navbar = () => {
     const {connectWallet} = interaction()
     return (
-      <div className="flex items-center space-x-6 bg-gray-100 p-4">
+      <div className="flex items-center justify-end space-x-6 p-4">
         <NavigationMenu>
           <NavigationMenuList className="flex space-x-4">
             <NavigationMenuItem>
-              <NavigationMenuTrigger>Learner</NavigationMenuTrigger>
+            <Link href="/learner" legacyBehavior passHref>
+            <NavigationMenuLink className={navigationMenuTriggerStyle()}>
+              Learner
+            </NavigationMenuLink>
+          </Link>
+              {/* <NavigationMenuTrigger>Learner</NavigationMenuTrigger>
               <NavigationMenuContent>
                 <NavigationMenuLink>My Courses</NavigationMenuLink>
                 <NavigationMenuLink>Buy Courses</NavigationMenuLink>
                 <NavigationMenuLink>Delete Courses</NavigationMenuLink>
-              </NavigationMenuContent>
+              </NavigationMenuContent> */}
             </NavigationMenuItem>
           </NavigationMenuList>
         </NavigationMenu>
@@ -29,13 +36,18 @@ import {
         <NavigationMenu>
           <NavigationMenuList className="flex space-x-4">
             <NavigationMenuItem>
-              <NavigationMenuTrigger>Instructor</NavigationMenuTrigger>
+            <Link href="/instructor" legacyBehavior passHref>
+            <NavigationMenuLink className={navigationMenuTriggerStyle()}>
+              Instructor
+            </NavigationMenuLink>
+          </Link>
+              {/* <NavigationMenuTrigger>Instructor</NavigationMenuTrigger>
               <NavigationMenuContent>
                 <NavigationMenuLink>My Courses</NavigationMenuLink>
                 <NavigationMenuLink>Add Courses</NavigationMenuLink>
                 <NavigationMenuLink>DeleteCourses</NavigationMenuLink>
 
-              </NavigationMenuContent>
+              </NavigationMenuContent> */}
             </NavigationMenuItem>
             
           </NavigationMenuList>

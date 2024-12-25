@@ -1,8 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
-import "./InstructorYieldManager.sol";
 
-contract Instructor {
+import "./Token.sol";
+import "./IYield.sol";
+
+contract Learn {
+    IYield public yieldContract; 
+
     struct Course {
         uint256 id;
         string title;
@@ -11,9 +15,13 @@ contract Instructor {
         uint256 endTime;
         uint256 price;
         address teacher;
-        uint256 stakedAmount;      // Added for yield tracking
-        uint256 yieldClaimed;      // Added for yield tracking
+        uint256 stakedAmount;      
+        uint256 yieldClaimed;      
         bool fundsWithdrawn; 
+    }
+
+    constructor(address _yieldContract) {
+        yieldContract = IYield(_yieldContract);
     }
 
     uint256 private nextCourseId;
@@ -53,7 +61,11 @@ contract Instructor {
             startTime: _startTime,
             endTime: _endTime,
             price: _price,
-            teacher: msg.sender
+            teacher: msg.sender,
+            stakedAmount: 0,
+            yieldClaimed: 0,
+            fundsWithdrawn: false
+
         });
         teacherCourses[msg.sender].push(courseId);
         emit CourseCreated(courseId, _title, msg.sender);
@@ -90,15 +102,12 @@ contract Instructor {
         require(course.teacher != address(0), "Course does not exist");
         require(!enrolledStudents[_id][msg.sender], "Already enrolled");
         require(msg.value == course.price, "Incorrect payment amount");
-
-        // Update staking info
+        
+        // Stake ETH in Yield contract
+        yieldContract.stake{value: msg.value()};
+        
+        // Update course info
         course.stakedAmount += msg.value;
-        totalStakedAmount[course.teacher] += msg.value;
-        if(lastYieldUpdate[course.teacher] == 0) {
-            lastYieldUpdate[course.teacher] = block.timestamp;
-        }
-
-        // Enroll student
         enrolledStudents[_id][msg.sender] = true;
         courseStudents[_id].push(msg.sender);
 
@@ -183,28 +192,26 @@ contract Instructor {
     }
 
     // Claim yield for a specific course
-    function claimCourseYield(uint256 _courseId) external {
+   function claimCourseYield(uint256 _courseId) external {
         Course storage course = courses[_courseId];
         require(course.teacher == msg.sender, "Only teacher can claim yield");
         require(block.timestamp >= course.endTime, "Course not ended");
         require(!course.fundsWithdrawn, "Funds already withdrawn");
-        require(course.stakedAmount > 0, "No funds staked");
-
-        uint256 totalYield = calculateYield(msg.sender);
-        require(totalYield > 0, "No yield available");
-
-        // Calculate proportional yield for this course
-        uint256 courseYield = (totalYield * course.stakedAmount) / totalStakedAmount[msg.sender];
         
-        // Update state
-        course.yieldClaimed += courseYield;
-        lastYieldUpdate[msg.sender] = block.timestamp;
-
-        // Transfer yield
-        (bool sent, ) = payable(msg.sender).call{value: courseYield}("");
+        // Calculate how much yield we earned
+        uint256 yieldEarned = yieldContract.calculateYieldTotal(address(this));
+        
+        // Withdraw the yield
+        yieldContract.withdrawYield();
+        
+        // Update the course info
+        course.yieldClaimed += yieldEarned;
+        
+        // Send the yield to the teacher
+        (bool sent, ) = payable(msg.sender).call{value: yieldEarned}("");
         require(sent, "Failed to send yield");
 
-        emit YieldClaimed(_courseId, msg.sender, courseYield);
+        emit YieldClaimed(_courseId, msg.sender, yieldEarned);
     }
 
     // Withdraw staked funds after course completion
@@ -213,20 +220,27 @@ contract Instructor {
         require(course.teacher == msg.sender, "Only teacher can withdraw");
         require(block.timestamp >= course.endTime, "Course not ended");
         require(!course.fundsWithdrawn, "Funds already withdrawn");
-        require(course.stakedAmount > 0, "No funds to withdraw");
-
+        
         uint256 amountToWithdraw = course.stakedAmount;
         
-        // Update state
+        // Unstake from Yield contract
+        yieldContract.unstake(amountToWithdraw);
+        
+        // Mark as withdrawn
         course.fundsWithdrawn = true;
-        totalStakedAmount[msg.sender] -= course.stakedAmount;
-
-        // Transfer funds
+        
+        // Send the unstaked ETH to the teacher
         (bool sent, ) = payable(msg.sender).call{value: amountToWithdraw}("");
         require(sent, "Failed to send funds");
 
         emit StakeWithdrawn(_courseId, msg.sender, amountToWithdraw);
     }
+
+    // Function to receive ETH
+    receive() external payable {}
+
+    // ... rest of your functions ...
+}
 
     // View function to get course yield info
     function getCourseYieldInfo(uint256 _courseId) external view returns (

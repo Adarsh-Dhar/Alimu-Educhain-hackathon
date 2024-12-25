@@ -102,9 +102,8 @@ contract Learn {
         require(course.teacher != address(0), "Course does not exist");
         require(!enrolledStudents[_id][msg.sender], "Already enrolled");
         require(msg.value == course.price, "Incorrect payment amount");
-        
         // Stake ETH in Yield contract
-        yieldContract.stake{value: msg.value()};
+        yieldContract.stake(course.price);
         
         // Update course info
         course.stakedAmount += msg.value;
@@ -236,11 +235,7 @@ contract Learn {
         emit StakeWithdrawn(_courseId, msg.sender, amountToWithdraw);
     }
 
-    // Function to receive ETH
-    receive() external payable {}
 
-    // ... rest of your functions ...
-}
 
     // View function to get course yield info
     function getCourseYieldInfo(uint256 _courseId) external view returns (
@@ -251,4 +246,5 @@ contract Learn {
         Course storage course = courses[_courseId];
         return (course.stakedAmount, course.yieldClaimed, course.fundsWithdrawn);
     }
-}
+
+    }

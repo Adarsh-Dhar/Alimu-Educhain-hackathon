@@ -1,31 +1,23 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.28;
 
-import "./Token.sol";
-
 contract Yield {
     mapping(address => uint256) public stakingBalance;
     mapping(address => bool) public isStaking;
     mapping(address => uint256) public startTime;
-    mapping(address => uint256) public pmknBalance;
+    mapping(address => uint256) public yieldBalance;
     string public name = "AlimuYield";
-
 
     event Stake(address indexed from, uint256 amount);
     event Unstake(address indexed from, uint256 amount);
     event YieldWithdraw(address indexed to, uint256 amount);
 
-    constructor(AlimuToken _alimuToken) {
-        alimuToken = _alimuToken;
-    }
-
-    // Modified to accept ETH
     function stake() public payable {
         require(msg.value > 0, "You cannot stake zero tokens");
 
         if(isStaking[msg.sender]) {
             uint256 toTransfer = calculateYieldTotal(msg.sender);
-            pmknBalance[msg.sender] += toTransfer;
+            yieldBalance[msg.sender] += toTransfer;
         }
 
         stakingBalance[msg.sender] += msg.value;
@@ -51,7 +43,7 @@ contract Yield {
         (bool sent, ) = payable(msg.sender).call{value: balTransfer}("");
         require(sent, "Failed to send ETH");
 
-        pmknBalance[msg.sender] += yieldTransfer;
+        yieldBalance[msg.sender] += yieldTransfer;
 
         if(stakingBalance[msg.sender] == 0) {
             isStaking[msg.sender] = false;
@@ -60,7 +52,6 @@ contract Yield {
         emit Unstake(msg.sender, balTransfer);
     }
 
-    // Rest of the functions remain the same...
     function calculateYieldTime(address user) public view returns(uint256) {
         uint256 end = block.timestamp;
         uint256 totalTime = end - startTime[user];
@@ -69,7 +60,7 @@ contract Yield {
 
     function calculateYieldTotal(address user) public view returns(uint256) {
         uint256 time = calculateYieldTime(user) * 10**18;
-        uint256 rate = 86400;
+        uint256 rate = 86400; // This represents a daily rate
         uint256 timeRate = time / rate;
         uint256 rawYield = (stakingBalance[user] * timeRate) / 10**18;
         return rawYield;
@@ -78,18 +69,21 @@ contract Yield {
     function withdrawYield() public {
         uint256 toTransfer = calculateYieldTotal(msg.sender);
         require(
-            toTransfer > 0 || pmknBalance[msg.sender] > 0,
+            toTransfer > 0 || yieldBalance[msg.sender] > 0,
             "Nothing to withdraw"
         );
 
-        if(pmknBalance[msg.sender] != 0) {
-            uint256 oldBalance = pmknBalance[msg.sender];
-            pmknBalance[msg.sender] = 0;
+        if(yieldBalance[msg.sender] != 0) {
+            uint256 oldBalance = yieldBalance[msg.sender];
+            yieldBalance[msg.sender] = 0;
             toTransfer += oldBalance;
         }
 
         startTime[msg.sender] = block.timestamp;
-        alimuToken.mint(msg.sender, toTransfer);
+        
+        // Transfer yield in ETH
+        (bool sent, ) = payable(msg.sender).call{value: toTransfer}("");
+        require(sent, "Failed to send yield");
 
         emit YieldWithdraw(msg.sender, toTransfer);
     }

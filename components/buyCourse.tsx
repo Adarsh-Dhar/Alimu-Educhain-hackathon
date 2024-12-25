@@ -96,7 +96,7 @@ function getRelativeTimeString(timestampMs: number, locale: string): string {
 }
 
 // CourseCard component
-const CourseCard: React.FC<Course & { onBuy?: (id: string) => void }> = ({ 
+const CourseCard: React.FC<Course & { onBuy?: (id: string, price: string) => void }> = ({ 
   id, 
   title, 
   description, 
@@ -119,16 +119,15 @@ const CourseCard: React.FC<Course & { onBuy?: (id: string) => void }> = ({
           <strong>End:</strong> {formatUnixTimestamp(endTime, { format: 'full' })}
         </div>
         <div>
-          <strong>Price:</strong> {price.toString()} ETH
+          <strong>Price:</strong> {Number(price) / 1e18} ETH
         </div>
-        
       </CardContent>
       <CardFooter className="flex justify-between items-center">
         <Button variant="outline" size="sm">Edit</Button>
         <Button 
           variant="destructive" 
           size="sm" 
-          onClick={() => onBuy && onBuy(id.toString())}
+          onClick={() => onBuy && onBuy(id.toString(), (Number(price) / 1e18).toString())}
         >
           Buy
         </Button>
@@ -136,6 +135,7 @@ const CourseCard: React.FC<Course & { onBuy?: (id: string) => void }> = ({
     </Card>
   );
 };
+
 
 // Main Courses Component
 export const GetAllCourses: React.FC = () => {
@@ -167,13 +167,13 @@ export const GetAllCourses: React.FC = () => {
     }
   };
 
-  const handleBuyCourse = async (courseId: string) => {
+  const handleBuyCourse = async (courseId: string, price: string) => {
     try {
-      await buyCourse(courseId);
-      // Refresh the courses list after deletion
+      await buyCourse(courseId, price);
+      // Refresh the courses list after purchase
       await renderCourses();
     } catch (error) {
-      console.error("Error deleting course:", error);
+      console.error("Error buying course:", error);
     }
   };
 
@@ -197,12 +197,12 @@ export const GetAllCourses: React.FC = () => {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {courses.map((course) => (
-            <CourseCard 
-              key={course.id.toString()} 
-              {...course} 
-              onBuy={handleBuyCourse}
-            />
-          ))}
+  <CourseCard 
+    key={course.id.toString()} 
+    {...course} 
+    onBuy={handleBuyCourse}
+  />
+))}
         </div>
       )}
     </div>

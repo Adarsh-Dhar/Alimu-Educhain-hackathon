@@ -74,29 +74,31 @@ contract Instructor {
 
     // New function to buy a course
     function buyCourse(uint256 _id) external payable {
-        // Retrieve the course
-        // Course storage course = courses[_id];
-                
-        // Ensure the student hasn't already enrolled
-        require(!enrolledStudents[_id][msg.sender], "Already enrolled in this course");
-        
-        // Check if the correct amount is paid
-        // require(msg.value == course.price, "Insufficient payment");
-        
-        // Mark the student as enrolled
-        enrolledStudents[_id][msg.sender] = true;
-        
-        // Add student to the course's student list
-        courseStudents[_id].push(msg.sender);
-        
-        // Emit event
-        emit StudentEnrolled(_id, msg.sender);
-        
-        // // Refund excess payment
-        // if (msg.value > course.price) {
-        //     payable(msg.sender).transfer(msg.value - course.price);
-        // }
-    }
+    // Retrieve the course
+    Course storage course = courses[_id];
+    
+    // Ensure the course exists (by checking teacher address is not zero)
+    require(course.teacher != address(0), "Course does not exist");
+            
+    // Ensure the student hasn't already enrolled
+    require(!enrolledStudents[_id][msg.sender], "Already enrolled in this course");
+    
+    // Check if the correct amount is paid
+    require(msg.value == course.price, "Incorrect payment amount");
+    
+    // Transfer the payment to the teacher
+    (bool sent, ) = payable(course.teacher).call{value: course.price}("");
+    require(sent, "Failed to send Ether");
+    
+    // Mark the student as enrolled
+    enrolledStudents[_id][msg.sender] = true;
+    
+    // Add student to the course's student list
+    courseStudents[_id].push(msg.sender);
+    
+    // Emit event
+    emit StudentEnrolled(_id, msg.sender);
+}
 
     // New function to get courses a student has enrolled in
     function getMyCoursesLearner() external view returns (Course[] memory) {

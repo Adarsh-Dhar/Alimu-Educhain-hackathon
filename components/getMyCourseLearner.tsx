@@ -119,7 +119,7 @@ const CourseCard: React.FC<Course & { onDelete?: (id: string) => void }> = ({
           <strong>End:</strong> {formatUnixTimestamp(endTime, { format: 'full' })}
         </div>
         <div>
-          <strong>Price:</strong> {price.toString()} ETH
+          <strong>Price:</strong> {Number(price) / 1e18} ETH
         </div>
         
       </CardContent>

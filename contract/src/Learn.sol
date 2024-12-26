@@ -103,7 +103,7 @@ contract Learn {
         require(!enrolledStudents[_id][msg.sender], "Already enrolled");
         require(msg.value == course.price, "Incorrect payment amount");
         // Stake ETH in Yield contract
-        yieldContract.stake(course.price);
+        // yieldContract.stake(course.price);
         
         // Update course info
         course.stakedAmount += msg.value;

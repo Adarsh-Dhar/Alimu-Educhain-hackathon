@@ -9,7 +9,7 @@ contract LearnScript is Script {
     }
     function run() public {
         // Replace these with actual addresses of deployed contracts
-        address learnAddress = address(0xD7e15b361c435602087332f883387Ad84a74D71D);
+        address learnAddress = address(0x5FbDB2315678afecb367f032d93F642f64180aa3);
        
         // Start broadcasting transactions
         vm.startBroadcast();

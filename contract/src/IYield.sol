@@ -6,7 +6,7 @@ pragma solidity 0.8.28;
  * @dev Interface for interacting with the Yield contract
  */
 interface IYield {
-    function stake(uint256 amount) external payable;
+    function stake() external payable;
     function unstake(uint256 amount) external;
     function withdrawYield() external;
     function calculateYieldTotal(address user) external view returns (uint256);

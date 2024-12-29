@@ -11,7 +11,6 @@ import {
   CardTitle,
 } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
 import { Calendar } from "@/components/ui/calendar"
 import {
   Popover,
@@ -118,6 +117,7 @@ export function CreateCourse() {
           console.log("hi")
               const start_date = convertDateToTimestamp(startDate.toString())
               const end_date = convertDateToTimestamp(endDate.toString())
+              console.log("price",price)
                 await createCourse(title, description, start_date.toString(), end_date.toString(), price.toString())
                 
             }else {

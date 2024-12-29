@@ -5,7 +5,7 @@ import "./Token.sol";
 import "./IYield.sol";
 
 contract Learn {
-    IYield public yieldContract; 
+    IYield public yieldContract;
 
     struct Course {
         uint256 id;
@@ -15,13 +15,10 @@ contract Learn {
         uint256 endTime;
         uint256 price;
         address teacher;
-        uint256 stakedAmount;      
-        uint256 yieldClaimed;      
-        bool fundsWithdrawn; 
-    }
-
-    constructor(address _yieldContract) {
-        yieldContract = IYield(_yieldContract);
+        uint256 stakedAmount;
+        uint256 yieldClaimed;
+        bool fundsWithdrawn;
+        bool isActive;
     }
 
     uint256 private nextCourseId;
@@ -29,21 +26,45 @@ contract Learn {
     mapping(address => uint256[]) private teacherCourses;
     mapping(uint256 => mapping(address => bool)) private enrolledStudents;
     mapping(uint256 => address[]) private courseStudents;
-    
+    mapping(uint256 => bool) private activeCourses;
+
     // Yield tracking
     mapping(address => uint256) private totalStakedAmount;
     mapping(address => uint256) private lastYieldUpdate;
 
-    event CourseCreated(uint256 courseId, string title, address teacher);
-    event CourseDeleted(uint256 courseId, address teacher);
-    event StudentEnrolled(uint256 courseId, address student);
-    event CourseRemoved(uint256 courseId, address student);
-    event YieldClaimed(uint256 courseId, address teacher, uint256 amount);
-    event StakeWithdrawn(uint256 courseId, address teacher, uint256 amount);
+    event CourseCreated(uint256 indexed courseId, string title, address indexed teacher);
+    event CourseDeleted(uint256 indexed courseId, address indexed teacher);
+    event StudentEnrolled(uint256 indexed courseId, address indexed student);
+    event CourseRemoved(uint256 indexed courseId, address indexed student);
+    event YieldClaimed(uint256 indexed courseId, address indexed teacher, uint256 amount);
+    event StakeWithdrawn(uint256 indexed courseId, address indexed teacher, uint256 amount);
+    event FundsTransferred(address indexed to, uint256 amount);
 
-    
+    modifier onlyTeacher(uint256 _courseId) {
+        require(courses[_courseId].teacher == msg.sender, "Only the teacher can perform this action");
+        _;
+    }
 
-    // Existing functions remain the same...
+    modifier courseExists(uint256 _courseId) {
+        require(activeCourses[_courseId], "Course does not exist or was deleted");
+        _;
+    }
+
+    modifier courseNotEnded(uint256 _courseId) {
+        require(block.timestamp < courses[_courseId].endTime, "Course has ended");
+        _;
+    }
+
+    modifier courseEnded(uint256 _courseId) {
+        require(block.timestamp >= courses[_courseId].endTime, "Course has not ended yet");
+        _;
+    }
+
+    constructor(address _yieldContract) {
+        require(_yieldContract != address(0), "Invalid yield contract address");
+        yieldContract = IYield(_yieldContract);
+    }
+
     function createCourse(
         string memory _title,
         string memory _description,
@@ -51,9 +72,13 @@ contract Learn {
         uint256 _endTime,
         uint256 _price
     ) external {
-        require(_startTime < _endTime, "Start time must be before end time");
-        uint256 courseId = nextCourseId;
-        nextCourseId++;
+        require(bytes(_title).length > 0, "Title cannot be empty");
+        require(_startTime > block.timestamp, "Start time must be in the future");
+        require(_endTime > _startTime, "End time must be after start time");
+        require(_price > 0, "Price must be greater than 0");
+
+        uint256 courseId = nextCourseId++;
+        
         courses[courseId] = Course({
             id: courseId,
             title: _title,
@@ -64,17 +89,24 @@ contract Learn {
             teacher: msg.sender,
             stakedAmount: 0,
             yieldClaimed: 0,
-            fundsWithdrawn: false
-
+            fundsWithdrawn: false,
+            isActive: true
         });
+
+        activeCourses[courseId] = true;
         teacherCourses[msg.sender].push(courseId);
+        
         emit CourseCreated(courseId, _title, msg.sender);
     }
 
-    function deleteCourse(uint256 _courseId) external {
-        Course storage course = courses[_courseId];
-        require(course.teacher == msg.sender, "Only the teacher can delete this course");
-        // Remove the course from teacherCourses
+    function deleteCourse(uint256 _courseId) 
+        external 
+        onlyTeacher(_courseId)
+        courseExists(_courseId)
+    {
+        require(courseStudents[_courseId].length == 0, "Cannot delete course with enrolled students");
+        
+        // Remove from teacher's courses
         uint256[] storage teacherCourseList = teacherCourses[msg.sender];
         for (uint256 i = 0; i < teacherCourseList.length; i++) {
             if (teacherCourseList[i] == _courseId) {
@@ -83,69 +115,48 @@ contract Learn {
                 break;
             }
         }
-        delete courses[_courseId];
+
+        activeCourses[_courseId] = false;
+        courses[_courseId].isActive = false;
+        
         emit CourseDeleted(_courseId, msg.sender);
     }
 
-    function getMyCoursesInstructor() external view returns (Course[] memory) {
-        uint256[] memory courseIds = teacherCourses[msg.sender];
-        Course[] memory myCourses = new Course[](courseIds.length);
-        for (uint256 i = 0; i < courseIds.length; i++) {
-            myCourses[i] = courses[courseIds[i]];
-        }
-        return myCourses;
-    }
-
-    // New function to buy a course
-   function buyCourse(uint256 _id) external payable {
-        Course storage course = courses[_id];
-        require(course.teacher != address(0), "Course does not exist");
-        require(!enrolledStudents[_id][msg.sender], "Already enrolled");
+    function buyCourse(uint256 _courseId) 
+        external 
+        payable 
+        courseExists(_courseId)
+        courseNotEnded(_courseId)
+    {
+        Course storage course = courses[_courseId];
+        require(!enrolledStudents[_courseId][msg.sender], "Already enrolled");
+        require(msg.sender != course.teacher, "Teacher cannot enroll in own course");
         require(msg.value == course.price, "Incorrect payment amount");
-        // Stake ETH in Yield contract
+
+        // Update enrollments
+        enrolledStudents[_courseId][msg.sender] = true;
+        courseStudents[_courseId].push(msg.sender);
+        
+        // Stake the payment
         yieldContract.stake{value: msg.value}();
-        
-        // Update course info
         course.stakedAmount += msg.value;
-        enrolledStudents[_id][msg.sender] = true;
-        courseStudents[_id].push(msg.sender);
+        totalStakedAmount[course.teacher] += msg.value;
+        lastYieldUpdate[course.teacher] = block.timestamp;
 
-        emit StudentEnrolled(_id, msg.sender);
+        emit StudentEnrolled(_courseId, msg.sender);
     }
 
-    // New function to get courses a student has enrolled in
-    function getMyCoursesLearner() external view returns (Course[] memory) {
-        // Create a dynamic array to store enrolled courses
-        uint256[] memory enrolledCourseIds = new uint256[](nextCourseId);
-        uint256 count = 0;
+    function removeCourse(uint256 _courseId)
+        external
+        courseExists(_courseId)
+    {
+        require(enrolledStudents[_courseId][msg.sender], "Not enrolled in this course");
         
-        // Find courses the student is enrolled in
-        for (uint256 i = 0; i < nextCourseId; i++) {
-            if (enrolledStudents[i][msg.sender]) {
-                enrolledCourseIds[count] = i;
-                count++;
-            }
-        }
+        // Remove from enrolled students
+        enrolledStudents[_courseId][msg.sender] = false;
         
-        // Create an array of courses with the exact number of enrolled courses
-        Course[] memory myCourses = new Course[](count);
-        for (uint256 i = 0; i < count; i++) {
-            myCourses[i] = courses[enrolledCourseIds[i]];
-        }
-        
-        return myCourses;
-    }
-
-    // New function to remove a course from a student's enrollment
-    function removeCourse(uint256 _id) external {
-        // Ensure the student is enrolled in the course
-        require(enrolledStudents[_id][msg.sender], "Not enrolled in this course");
-        
-        // Mark the student as no longer enrolled
-        enrolledStudents[_id][msg.sender] = false;
-        
-        // Remove student from the course's student list
-        address[] storage students = courseStudents[_id];
+        // Remove from course students array
+        address[] storage students = courseStudents[_courseId];
         for (uint256 i = 0; i < students.length; i++) {
             if (students[i] == msg.sender) {
                 students[i] = students[students.length - 1];
@@ -154,97 +165,166 @@ contract Learn {
             }
         }
         
-        // Emit event
-        emit CourseRemoved(_id, msg.sender);
+        emit CourseRemoved(_courseId, msg.sender);
     }
 
-    // Function to get students enrolled in a specific course (only accessible by the course teacher)
-    function getEnrolledStudents(uint256 _courseId) external view returns (address[] memory) {
-        // Ensure only the course teacher can view enrolled students
-        Course memory course = courses[_courseId];
-        require(course.teacher == msg.sender, "Only the course teacher can view enrolled students");
-        
-        return courseStudents[_courseId];
-    }
-
-    function getAllCourses() external view returns (Course[] memory) {
-        // Create an array of courses with the total number of courses created
-        Course[] memory allCourses = new Course[](nextCourseId);
-        
-        // Populate the array with all courses
-        for (uint256 i = 0; i < nextCourseId; i++) {
-            allCourses[i] = courses[i];
-        }
-        
-        return allCourses;
-    }
-
-     function calculateYield(address teacher) public view returns (uint256) {
-        if(totalStakedAmount[teacher] == 0) return 0;
-        
-        uint256 timeElapsed = block.timestamp - lastYieldUpdate[teacher];
-        // Example yield rate: 0.1% per day
-        uint256 yieldRate = 1000; // 0.1% = 1000 / 1000000
-        uint256 yield = (totalStakedAmount[teacher] * timeElapsed * yieldRate) / (1000000 * 1 days);
-        
-        return yield;
-    }
-
-    // Claim yield for a specific course
-   function claimCourseYield(uint256 _courseId) external {
+    function claimCourseYield(uint256 _courseId) 
+        external 
+        onlyTeacher(_courseId)
+        courseExists(_courseId)
+        courseEnded(_courseId)
+    {
         Course storage course = courses[_courseId];
-        require(course.teacher == msg.sender, "Only teacher can claim yield");
-        require(block.timestamp >= course.endTime, "Course not ended");
-        require(!course.fundsWithdrawn, "Funds already withdrawn");
+        require(!course.fundsWithdrawn, "Yield already claimed");
         
-        // Calculate how much yield we earned
         uint256 yieldEarned = yieldContract.calculateYieldTotal(address(this));
-        
-        // Withdraw the yield
+        require(yieldEarned > 0, "No yield to claim");
+
+        // Withdraw yield from the contract
         yieldContract.withdrawYield();
-        
-        // Update the course info
         course.yieldClaimed += yieldEarned;
         
-        // Send the yield to the teacher
-        (bool sent, ) = payable(msg.sender).call{value: yieldEarned}("");
-        require(sent, "Failed to send yield");
+        // Transfer yield to teacher
+        (bool success, ) = payable(msg.sender).call{value: yieldEarned}("");
+        require(success, "Yield transfer failed");
 
         emit YieldClaimed(_courseId, msg.sender, yieldEarned);
     }
 
-    // Withdraw staked funds after course completion
-    function withdrawCourseFunds(uint256 _courseId) external {
+    function withdrawCourseFunds(uint256 _courseId)
+        external
+        onlyTeacher(_courseId)
+        courseExists(_courseId)
+        courseEnded(_courseId)
+    {
         Course storage course = courses[_courseId];
-        require(course.teacher == msg.sender, "Only teacher can withdraw");
-        require(block.timestamp >= course.endTime, "Course not ended");
         require(!course.fundsWithdrawn, "Funds already withdrawn");
-        
+        require(course.stakedAmount > 0, "No funds to withdraw");
+
         uint256 amountToWithdraw = course.stakedAmount;
-        
-        // Unstake from Yield contract
+        course.fundsWithdrawn = true;
+        totalStakedAmount[msg.sender] -= amountToWithdraw;
+
+        // Unstake from yield contract
         yieldContract.unstake(amountToWithdraw);
         
-        // Mark as withdrawn
-        course.fundsWithdrawn = true;
-        
-        // Send the unstaked ETH to the teacher
-        (bool sent, ) = payable(msg.sender).call{value: amountToWithdraw}("");
-        require(sent, "Failed to send funds");
+        // Transfer funds to teacher
+        (bool success, ) = payable(msg.sender).call{value: amountToWithdraw}("");
+        require(success, "Fund transfer failed");
 
         emit StakeWithdrawn(_courseId, msg.sender, amountToWithdraw);
     }
 
+    // View Functions
 
+    function getAllCourses() external view returns (Course[] memory) {
+        uint256 activeCount = 0;
+        
+        // Count active courses
+        for (uint256 i = 0; i < nextCourseId; i++) {
+            if (activeCourses[i]) {
+                activeCount++;
+            }
+        }
+        
+        Course[] memory activeCoursesList = new Course[](activeCount);
+        uint256 currentIndex = 0;
+        
+        // Populate active courses
+        for (uint256 i = 0; i < nextCourseId; i++) {
+            if (activeCourses[i]) {
+                activeCoursesList[currentIndex] = courses[i];
+                currentIndex++;
+            }
+        }
+        
+        return activeCoursesList;
+    }
 
-    // View function to get course yield info
-    function getCourseYieldInfo(uint256 _courseId) external view returns (
-        uint256 stakedAmount,
-        uint256 yieldClaimed,
-        bool fundsWithdrawn
-    ) {
+    function getMyCoursesInstructor() external view returns (Course[] memory) {
+        uint256[] memory courseIds = teacherCourses[msg.sender];
+        uint256 activeCount = 0;
+        
+        // Count active courses
+        for (uint256 i = 0; i < courseIds.length; i++) {
+            if (activeCourses[courseIds[i]]) {
+                activeCount++;
+            }
+        }
+        
+        Course[] memory activeCourses = new Course[](activeCount);
+        uint256 currentIndex = 0;
+        
+        // Populate active courses
+        for (uint256 i = 0; i < courseIds.length; i++) {
+           
+                activeCourses[currentIndex] = courses[courseIds[i]];
+                currentIndex++;
+            
+        }
+        
+        return activeCourses;
+    }
+
+    function getMyCoursesLearner() external view returns (Course[] memory) {
+        uint256 enrolledCount = 0;
+        
+        // Count enrolled courses
+        for (uint256 i = 0; i < nextCourseId; i++) {
+            if (enrolledStudents[i][msg.sender] && activeCourses[i]) {
+                enrolledCount++;
+            }
+        }
+        
+        Course[] memory enrolledCourses = new Course[](enrolledCount);
+        uint256 currentIndex = 0;
+        
+        // Populate enrolled courses
+        for (uint256 i = 0; i < nextCourseId; i++) {
+            if (enrolledStudents[i][msg.sender] && activeCourses[i]) {
+                enrolledCourses[currentIndex] = courses[i];
+                currentIndex++;
+            }
+        }
+        
+        return enrolledCourses;
+    }
+
+    function getEnrolledStudents(uint256 _courseId) 
+        external 
+        view 
+        onlyTeacher(_courseId)
+        courseExists(_courseId)
+        returns (address[] memory) 
+    {
+        return courseStudents[_courseId];
+    }
+
+    function getCourseYieldInfo(uint256 _courseId)
+        external
+        view
+        courseExists(_courseId)
+        returns (
+            uint256 stakedAmount,
+            uint256 yieldClaimed,
+            bool fundsWithdrawn
+        )
+    {
         Course storage course = courses[_courseId];
         return (course.stakedAmount, course.yieldClaimed, course.fundsWithdrawn);
     }
 
+    function calculateYield(address teacher) public view returns (uint256) {
+        if (totalStakedAmount[teacher] == 0) return 0;
+        
+        uint256 timeElapsed = block.timestamp - lastYieldUpdate[teacher];
+        // Example yield rate: 0.1% per day
+        uint256 yieldRate = 1000; // 0.1% = 1000 / 1000000
+        return (totalStakedAmount[teacher] * timeElapsed * yieldRate) / (1000000 * 1 days);
     }
+
+    // Optional: Add a function to handle receiving ETH
+    receive() external payable {
+        emit FundsTransferred(msg.sender, msg.value);
+    }
+}

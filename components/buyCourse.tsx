@@ -1,58 +1,45 @@
-import React, { useEffect, useState } from "react";
-import { interaction } from "@/interaction";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import Link from "next/link";
+import React, { useEffect, useState } from "react"
+import { interaction } from "@/interaction"
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import Link from "next/link"
+import { courseService, Course } from "@/services/courseService"
 
-// Define a type for the Course structure
-interface Course {
-  id: bigint;
-  title: string;
-  description: string;
-  startTime: bigint;
-  endTime: bigint;
-  price: bigint;
-  teacher: string;
-}
-
-// Timestamp formatting utility
+// Keep the original formatUnixTimestamp utility
 export function formatUnixTimestamp(
-  timestamp: number | bigint, 
+  timestamp: number | bigint,
   options: {
-    format?: 'full' | 'date' | 'time' | 'relative';
-    locale?: string;
+    format?: 'full' | 'date' | 'time' | 'relative'
+    locale?: string
   } = {}
 ): string {
-  // Ensure timestamp is a number and convert from seconds to milliseconds
-  const timestampMs = Number(timestamp) * 1000;
+  const timestampMs = Number(timestamp) * 1000
   
-  // Validate timestamp
   if (isNaN(timestampMs)) {
-    return 'Invalid Timestamp';
+    return 'Invalid Timestamp'
   }
 
   const {
     format = 'date',
     locale = 'en-US'
-  } = options;
+  } = options
 
-  const date = new Date(timestampMs);
+  const date = new Date(timestampMs)
 
-  // Different formatting based on option
   switch (format) {
     case 'full':
       return date.toLocaleString(locale, {
         year: 'numeric',
         month: 'long',
         day: 'numeric'
-      });
+      })
 
     case 'date':
       return date.toLocaleDateString(locale, {
         year: 'numeric',
         month: 'long',
         day: 'numeric'
-      });
+      })
 
     case 'time':
       return date.toLocaleTimeString(locale, {
@@ -60,21 +47,21 @@ export function formatUnixTimestamp(
         minute: '2-digit',
         second: '2-digit',
         hour12: true
-      });
+      })
 
     case 'relative':
-      return getRelativeTimeString(timestampMs, locale);
+      return getRelativeTimeString(timestampMs, locale)
 
     default:
-      return date.toString();
+      return date.toString()
   }
 }
 
-// Relative time string utility
+// Keep the original getRelativeTimeString utility
 function getRelativeTimeString(timestampMs: number, locale: string): string {
-  const rtf = new Intl.RelativeTimeFormat(locale, { numeric: 'auto' });
-  const now = Date.now();
-  const diffMs = timestampMs - now;
+  const rtf = new Intl.RelativeTimeFormat(locale, { numeric: 'auto' })
+  const now = Date.now()
+  const diffMs = timestampMs - now
 
   const units: { unit: Intl.RelativeTimeFormatUnit; ms: number }[] = [
     { unit: 'year', ms: 31536000000 },
@@ -84,18 +71,18 @@ function getRelativeTimeString(timestampMs: number, locale: string): string {
     { unit: 'hour', ms: 3600000 },
     { unit: 'minute', ms: 60000 },
     { unit: 'second', ms: 1000 }
-  ];
+  ]
 
   for (const { unit, ms } of units) {
     if (Math.abs(diffMs) >= ms) {
-      return rtf.format(Math.round(diffMs / ms), unit);
+      return rtf.format(Math.round(diffMs / ms), unit)
     }
   }
 
-  return 'just now';
+  return 'just now'
 }
 
-// CourseCard component
+// CourseCard component remains the same
 const CourseCard: React.FC<Course & { onBuy?: (id: string, price: string) => void }> = ({ 
   id, 
   title, 
@@ -133,53 +120,37 @@ const CourseCard: React.FC<Course & { onBuy?: (id: string, price: string) => voi
         </Button>
       </CardFooter>
     </Card>
-  );
-};
-
+  )
+}
 
 // Main Courses Component
 export const GetAllCourses: React.FC = () => {
-  const [courses, setCourses] = useState<Course[]>([]);
-  const { getAllCourses, buyCourse } = interaction();
+  const [courses, setCourses] = useState<Course[]>([])
+  const { buyCourse } = interaction()
 
   const renderCourses = async () => {
     try {
-      const tx = await getAllCourses();
-      if (!tx) {
-        return null;
-      }
-      
-      // Transform the tx array into Course objects
-      const transformedCourses = tx.map((item: any) => ({
-        id: item[0],
-        title: item[1],
-        description: item[2],
-        startTime: item[3],  // Corrected to use index 3
-        endTime: item[4],    // Corrected to use index 4
-        price: item[5],
-        teacher: item[6]
-      }));
-
-      console.log("Transformed Courses:", transformedCourses);
-      setCourses(transformedCourses);
+      const fetchedCourses = await courseService.getAllCourses()
+      console.log("Fetched Courses:", fetchedCourses)
+      setCourses(fetchedCourses)
     } catch (error) {
-      console.error("Error fetching courses:", error);
+      console.error("Error fetching courses:", error)
     }
-  };
+  }
 
   const handleBuyCourse = async (courseId: string, price: string) => {
     try {
-      await buyCourse(courseId, price);
+      await buyCourse(courseId, price)
       // Refresh the courses list after purchase
-      await renderCourses();
+      await renderCourses()
     } catch (error) {
-      console.error("Error buying course:", error);
+      console.error("Error buying course:", error)
     }
-  };
+  }
 
   useEffect(() => {
-    renderCourses();
-  }, []);
+    renderCourses()
+  }, [])
 
   return (
     <div className="container mx-auto px-4 py-6">
@@ -197,16 +168,16 @@ export const GetAllCourses: React.FC = () => {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {courses.map((course) => (
-  <CourseCard 
-    key={course.id.toString()} 
-    {...course} 
-    onBuy={handleBuyCourse}
-  />
-))}
+            <CourseCard 
+              key={course.id.toString()} 
+              {...course} 
+              onBuy={handleBuyCourse}
+            />
+          ))}
         </div>
       )}
     </div>
-  );
-};
+  )
+}
 
-export default GetAllCourses;
+export default GetAllCourses

@@ -12,3 +12,17 @@ datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
+
+model Course {
+  id   Int    @id @default(autoincrement())
+  title String
+  description String
+  startTime DateTime
+  endTime DateTime
+  price Int
+  teacher String
+  stakedAmount Int
+  yieldClaimed Int
+  fundsWithdrawn Boolean
+  isActive Boolean
+}

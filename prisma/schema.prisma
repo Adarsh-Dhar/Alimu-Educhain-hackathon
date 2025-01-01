@@ -67,8 +67,7 @@ model Enrollment {
   completedAt      DateTime?
   progress         Int       @default(0)
   
-  // Blockchain transaction details
-  transactionHash  String?   @unique
+  
   
   @@unique([learnerAddress, courseId])
 }

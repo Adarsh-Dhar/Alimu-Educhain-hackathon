@@ -45,12 +45,12 @@ export async function POST(req: Request,
     try {
         const courseId = parseInt(params.id)
       const body = await req.json()
-      const { learnerAddress, transactionHash } = body
+      const { learnerAddress } = body
   
       // Validate inputs
      
   
-      if (!courseId || !transactionHash) {
+      if (!courseId ) {
         return NextResponse.json(
           { error: 'Missing required fields' },
           { status: 400 }
@@ -106,23 +106,15 @@ export async function POST(req: Request,
       }
   
       // Check if transaction hash is unique
-      const existingTransaction = await prisma.enrollment.findUnique({
-        where: { transactionHash },
-      })
+      
   
-      if (existingTransaction) {
-        return NextResponse.json(
-          { error: 'Transaction already processed' },
-          { status: 400 }
-        )
-      }
+      
   
       // Create enrollment
       const enrollment = await prisma.enrollment.create({
         data: {
           learnerAddress,
           courseId,
-          transactionHash,
           progress: 0,
           enrolledAt: new Date(),
         },

@@ -31,6 +31,7 @@ export const GET = async () => {
         startTime: new Date(body.startTime),
         endTime: new Date(body.endTime),
         price: body.price,
+        instructorAddress: body.instructorAddress
       }
       
       // Validate request body

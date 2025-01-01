@@ -140,24 +140,12 @@ export const GetMyCoursesInstructor: React.FC = () => {
   const fetchCourses = async () => {
     try {
       setLoading(true)
-      const response = await axios.get('/api/courses')
+      const response = await axios.get('http://localhost:3000/api/courses')
       
-      // Transform the response data
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const transformedCourses = response.data.map((course: any) => ({
-        id: BigInt(course.id),
-        title: course.title,
-        description: course.description,
-        startTime: BigInt(Math.floor(new Date(course.startTime).getTime() / 1000)),
-        endTime: BigInt(Math.floor(new Date(course.endTime).getTime() / 1000)),
-        price: BigInt(course.price),
-        teacher: course.teacher
-      }))
-
-      setCourses(transformedCourses)
+      console.log("response ",response)
     } catch (error) {
       console.error("Error fetching courses:", error)
-      setError("Failed to load courses. Please try again later.")
+      // setError("Failed to load courses. Please try again later.")
     } finally {
       setLoading(false)
     }

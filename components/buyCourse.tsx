@@ -3,7 +3,7 @@ import { interaction } from "@/interaction"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
-import { courseService, Course } from "@/services/courseService"
+import { courseService, Course } from "./services/CourseService"
 
 // Keep the original formatUnixTimestamp utility
 export function formatUnixTimestamp(
@@ -138,9 +138,9 @@ export const GetAllCourses: React.FC = () => {
     }
   }
 
-  const handleBuyCourse = async (courseId: string, price: string) => {
+  const handleBuyCourse = async ( price: string) => {
     try {
-      await buyCourse(courseId, price)
+      await buyCourse(price)
       // Refresh the courses list after purchase
       await renderCourses()
     } catch (error) {

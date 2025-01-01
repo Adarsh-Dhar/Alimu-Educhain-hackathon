@@ -8,11 +8,11 @@ import {
     // NavigationMenuTrigger,
     navigationMenuTriggerStyle
   } from "@/components/ui/navigation-menu";
-  // import { interaction } from "@/interaction";
+  import { interaction } from "@/interaction";
   import Link from "next/link"
   
   export const Navbar = () => {
-    // const {connectWallet} = interaction()
+    const {connectWallet} = interaction()
     return (
       <div className="flex items-center justify-end space-x-6 p-4">
         <NavigationMenu>
@@ -58,7 +58,7 @@ import {
 
             <NavigationMenuLink>
               <Button onClick={async () => {
-                // await connectWallet()
+                await connectWallet()
               }}>Connect Wallet</Button>
             </NavigationMenuLink>
 

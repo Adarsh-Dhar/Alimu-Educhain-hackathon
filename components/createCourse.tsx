@@ -67,6 +67,7 @@ export function CreateCourse() {
           startTime: new Date(start_date * 1000).toISOString(),
           endTime: new Date(end_date * 1000).toISOString(),
           price: price, // Convert to wei
+          instructorAddress: "0x70997970C51812dc3A010C7d01b50e0d17dc79C8"
         })
 
         toast({

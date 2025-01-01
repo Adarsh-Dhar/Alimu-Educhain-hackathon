@@ -1,98 +1,98 @@
-// /* eslint-disable @typescript-eslint/ban-ts-comment */
-// import { ethers } from 'ethers';
-// import { useStore } from '@/zustand';
+/* eslint-disable @typescript-eslint/ban-ts-comment */
+import { ethers } from 'ethers';
+import { useStore } from '@/zustand';
 
-// const instructor_address = "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512";
-// const instructor_abi = [{"type":"constructor","inputs":[{"name":"_yieldContract","type":"address","internalType":"address"}],"stateMutability":"nonpayable"},{"type":"receive","stateMutability":"payable"},{"type":"function","name":"buyCourse","inputs":[{"name":"_courseId","type":"uint256","internalType":"uint256"}],"outputs":[],"stateMutability":"payable"},{"type":"function","name":"calculateYield","inputs":[{"name":"teacher","type":"address","internalType":"address"}],"outputs":[{"name":"","type":"uint256","internalType":"uint256"}],"stateMutability":"view"},{"type":"function","name":"claimCourseYield","inputs":[{"name":"_courseId","type":"uint256","internalType":"uint256"}],"outputs":[],"stateMutability":"nonpayable"},{"type":"function","name":"createCourse","inputs":[{"name":"_title","type":"string","internalType":"string"},{"name":"_description","type":"string","internalType":"string"},{"name":"_startTime","type":"uint256","internalType":"uint256"},{"name":"_endTime","type":"uint256","internalType":"uint256"},{"name":"_price","type":"uint256","internalType":"uint256"}],"outputs":[],"stateMutability":"nonpayable"},{"type":"function","name":"deleteCourse","inputs":[{"name":"_courseId","type":"uint256","internalType":"uint256"}],"outputs":[],"stateMutability":"nonpayable"},{"type":"function","name":"getAllCourses","inputs":[],"outputs":[{"name":"","type":"tuple[]","internalType":"struct Learn.Course[]","components":[{"name":"id","type":"uint256","internalType":"uint256"},{"name":"title","type":"string","internalType":"string"},{"name":"description","type":"string","internalType":"string"},{"name":"startTime","type":"uint256","internalType":"uint256"},{"name":"endTime","type":"uint256","internalType":"uint256"},{"name":"price","type":"uint256","internalType":"uint256"},{"name":"teacher","type":"address","internalType":"address"},{"name":"stakedAmount","type":"uint256","internalType":"uint256"},{"name":"yieldClaimed","type":"uint256","internalType":"uint256"},{"name":"fundsWithdrawn","type":"bool","internalType":"bool"},{"name":"isActive","type":"bool","internalType":"bool"}]}],"stateMutability":"view"},{"type":"function","name":"getCourseYieldInfo","inputs":[{"name":"_courseId","type":"uint256","internalType":"uint256"}],"outputs":[{"name":"stakedAmount","type":"uint256","internalType":"uint256"},{"name":"yieldClaimed","type":"uint256","internalType":"uint256"},{"name":"fundsWithdrawn","type":"bool","internalType":"bool"}],"stateMutability":"view"},{"type":"function","name":"getEnrolledStudents","inputs":[{"name":"_courseId","type":"uint256","internalType":"uint256"}],"outputs":[{"name":"","type":"address[]","internalType":"address[]"}],"stateMutability":"view"},{"type":"function","name":"getMyCoursesInstructor","inputs":[],"outputs":[{"name":"","type":"tuple[]","internalType":"struct Learn.Course[]","components":[{"name":"id","type":"uint256","internalType":"uint256"},{"name":"title","type":"string","internalType":"string"},{"name":"description","type":"string","internalType":"string"},{"name":"startTime","type":"uint256","internalType":"uint256"},{"name":"endTime","type":"uint256","internalType":"uint256"},{"name":"price","type":"uint256","internalType":"uint256"},{"name":"teacher","type":"address","internalType":"address"},{"name":"stakedAmount","type":"uint256","internalType":"uint256"},{"name":"yieldClaimed","type":"uint256","internalType":"uint256"},{"name":"fundsWithdrawn","type":"bool","internalType":"bool"},{"name":"isActive","type":"bool","internalType":"bool"}]}],"stateMutability":"view"},{"type":"function","name":"getMyCoursesLearner","inputs":[],"outputs":[{"name":"","type":"tuple[]","internalType":"struct Learn.Course[]","components":[{"name":"id","type":"uint256","internalType":"uint256"},{"name":"title","type":"string","internalType":"string"},{"name":"description","type":"string","internalType":"string"},{"name":"startTime","type":"uint256","internalType":"uint256"},{"name":"endTime","type":"uint256","internalType":"uint256"},{"name":"price","type":"uint256","internalType":"uint256"},{"name":"teacher","type":"address","internalType":"address"},{"name":"stakedAmount","type":"uint256","internalType":"uint256"},{"name":"yieldClaimed","type":"uint256","internalType":"uint256"},{"name":"fundsWithdrawn","type":"bool","internalType":"bool"},{"name":"isActive","type":"bool","internalType":"bool"}]}],"stateMutability":"view"},{"type":"function","name":"removeCourse","inputs":[{"name":"_courseId","type":"uint256","internalType":"uint256"}],"outputs":[],"stateMutability":"nonpayable"},{"type":"function","name":"withdrawCourseFunds","inputs":[{"name":"_courseId","type":"uint256","internalType":"uint256"}],"outputs":[],"stateMutability":"nonpayable"},{"type":"function","name":"yieldContract","inputs":[],"outputs":[{"name":"","type":"address","internalType":"contract IYield"}],"stateMutability":"view"},{"type":"event","name":"CourseCreated","inputs":[{"name":"courseId","type":"uint256","indexed":true,"internalType":"uint256"},{"name":"title","type":"string","indexed":false,"internalType":"string"},{"name":"teacher","type":"address","indexed":true,"internalType":"address"}],"anonymous":false},{"type":"event","name":"CourseDeleted","inputs":[{"name":"courseId","type":"uint256","indexed":true,"internalType":"uint256"},{"name":"teacher","type":"address","indexed":true,"internalType":"address"}],"anonymous":false},{"type":"event","name":"CourseRemoved","inputs":[{"name":"courseId","type":"uint256","indexed":true,"internalType":"uint256"},{"name":"student","type":"address","indexed":true,"internalType":"address"}],"anonymous":false},{"type":"event","name":"FundsTransferred","inputs":[{"name":"to","type":"address","indexed":true,"internalType":"address"},{"name":"amount","type":"uint256","indexed":false,"internalType":"uint256"}],"anonymous":false},{"type":"event","name":"StakeWithdrawn","inputs":[{"name":"courseId","type":"uint256","indexed":true,"internalType":"uint256"},{"name":"teacher","type":"address","indexed":true,"internalType":"address"},{"name":"amount","type":"uint256","indexed":false,"internalType":"uint256"}],"anonymous":false},{"type":"event","name":"StudentEnrolled","inputs":[{"name":"courseId","type":"uint256","indexed":true,"internalType":"uint256"},{"name":"student","type":"address","indexed":true,"internalType":"address"}],"anonymous":false},{"type":"event","name":"YieldClaimed","inputs":[{"name":"courseId","type":"uint256","indexed":true,"internalType":"uint256"},{"name":"teacher","type":"address","indexed":true,"internalType":"address"},{"name":"amount","type":"uint256","indexed":false,"internalType":"uint256"}],"anonymous":false}];
+const instructor_address = "0x5FbDB2315678afecb367f032d93F642f64180aa3";
+const instructor_abi = [{"type":"receive","stateMutability":"payable"},{"type":"function","name":"buy","inputs":[],"outputs":[],"stateMutability":"payable"},{"type":"function","name":"calculateYieldTime","inputs":[{"name":"user","type":"address","internalType":"address"}],"outputs":[{"name":"","type":"uint256","internalType":"uint256"}],"stateMutability":"view"},{"type":"function","name":"calculateYieldTotal","inputs":[{"name":"user","type":"address","internalType":"address"}],"outputs":[{"name":"","type":"uint256","internalType":"uint256"}],"stateMutability":"view"},{"type":"function","name":"getTotalAccumulatedYield","inputs":[{"name":"user","type":"address","internalType":"address"}],"outputs":[{"name":"","type":"uint256","internalType":"uint256"}],"stateMutability":"view"},{"type":"function","name":"getUserYields","inputs":[{"name":"user","type":"address","internalType":"address"}],"outputs":[{"name":"","type":"tuple[]","internalType":"struct Yield.YieldInfo[]","components":[{"name":"amount","type":"uint256","internalType":"uint256"},{"name":"timestamp","type":"uint256","internalType":"uint256"}]}],"stateMutability":"view"},{"type":"function","name":"isStaking","inputs":[{"name":"","type":"address","internalType":"address"}],"outputs":[{"name":"","type":"bool","internalType":"bool"}],"stateMutability":"view"},{"type":"function","name":"name","inputs":[],"outputs":[{"name":"","type":"string","internalType":"string"}],"stateMutability":"view"},{"type":"function","name":"stake","inputs":[],"outputs":[],"stateMutability":"payable"},{"type":"function","name":"stakingBalance","inputs":[{"name":"","type":"address","internalType":"address"}],"outputs":[{"name":"","type":"uint256","internalType":"uint256"}],"stateMutability":"view"},{"type":"function","name":"startTime","inputs":[{"name":"","type":"address","internalType":"address"}],"outputs":[{"name":"","type":"uint256","internalType":"uint256"}],"stateMutability":"view"},{"type":"function","name":"unstake","inputs":[{"name":"amount","type":"uint256","internalType":"uint256"}],"outputs":[],"stateMutability":"nonpayable"},{"type":"function","name":"userYields","inputs":[{"name":"","type":"address","internalType":"address"},{"name":"","type":"uint256","internalType":"uint256"}],"outputs":[{"name":"amount","type":"uint256","internalType":"uint256"},{"name":"timestamp","type":"uint256","internalType":"uint256"}],"stateMutability":"view"},{"type":"function","name":"withdrawBuyYields","inputs":[],"outputs":[],"stateMutability":"nonpayable"},{"type":"function","name":"withdrawYield","inputs":[],"outputs":[],"stateMutability":"nonpayable"},{"type":"function","name":"yieldBalance","inputs":[{"name":"","type":"address","internalType":"address"}],"outputs":[{"name":"","type":"uint256","internalType":"uint256"}],"stateMutability":"view"},{"type":"event","name":"Buy","inputs":[{"name":"buyer","type":"address","indexed":true,"internalType":"address"},{"name":"principal","type":"uint256","indexed":false,"internalType":"uint256"},{"name":"yieldGenerated","type":"uint256","indexed":false,"internalType":"uint256"}],"anonymous":false},{"type":"event","name":"Stake","inputs":[{"name":"from","type":"address","indexed":true,"internalType":"address"},{"name":"amount","type":"uint256","indexed":false,"internalType":"uint256"}],"anonymous":false},{"type":"event","name":"Unstake","inputs":[{"name":"from","type":"address","indexed":true,"internalType":"address"},{"name":"amount","type":"uint256","indexed":false,"internalType":"uint256"}],"anonymous":false},{"type":"event","name":"YieldWithdraw","inputs":[{"name":"to","type":"address","indexed":true,"internalType":"address"},{"name":"amount","type":"uint256","indexed":false,"internalType":"uint256"}],"anonymous":false}];
 
-// export const interaction = () => {
-//     // Safely get store state
-//     const getStoreState = () => {
-//         try {
-//             return {
-//                 address: useStore.getState().address,
-//                 setAddress: useStore.getState().setAddress,
-//                 provider: useStore.getState().provider,
-//                 setProvider: useStore.getState().setProvider
-//             };
-//         } catch (error) {
-//             console.error("Error accessing store state:", error);
-//             return {
-//                 address: null,
-//                 setAddress: () => {},
-//                 provider: null,
-//                 setProvider: () => {}
-//             };
-//         }
-//     };
+export const interaction = () => {
+    // Safely get store state
+    const getStoreState = () => {
+        try {
+            return {
+                address: useStore.getState().address,
+                setAddress: useStore.getState().setAddress,
+                provider: useStore.getState().provider,
+                setProvider: useStore.getState().setProvider
+            };
+        } catch (error) {
+            console.error("Error accessing store state:", error);
+            return {
+                address: null,
+                setAddress: () => {},
+                provider: null,
+                setProvider: () => {}
+            };
+        }
+    };
 
-//     const initEthereum = async () => {   
-//         try {
-//             // Check for Ethereum provider
-//             // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-//             //@ts-ignore
-//             if (window.ethereum) {
-//                 // Create provider using ethers.BrowserProvider
-//                 //@ts-ignore
-//                 const provider = new ethers.BrowserProvider(window.ethereum);
+    const initEthereum = async () => {   
+        try {
+            // Check for Ethereum provider
+            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+            //@ts-ignore
+            if (window.ethereum) {
+                // Create provider using ethers.BrowserProvider
+                //@ts-ignore
+                const provider = new ethers.BrowserProvider(window.ethereum);
                 
-//                 // Request account access
-//                 await provider.send("eth_requestAccounts", []);
+                // Request account access
+                await provider.send("eth_requestAccounts", []);
                 
-//                 // Get signer
-//                 const signer = await provider.getSigner();
+                // Get signer
+                const signer = await provider.getSigner();
                 
-//                 // Create contract instance
-//                 const instructorContract = new ethers.Contract(
-//                     instructor_address, 
-//                     instructor_abi, 
-//                     signer
-//                 );
+                // Create contract instance
+                const instructorContract = new ethers.Contract(
+                    instructor_address, 
+                    instructor_abi, 
+                    signer
+                );
                 
-//                 return instructorContract;
-//             } else {
-//                 console.log("MetaMask is not installed!");
-//                 return null;
-//             }
-//         } catch (error) {
-//             console.error("Error initializing Ethereum:", error);
-//             return null;
-//         }
-//     };
+                return instructorContract;
+            } else {
+                console.log("MetaMask is not installed!");
+                return null;
+            }
+        } catch (error) {
+            console.error("Error initializing Ethereum:", error);
+            return null;
+        }
+    };
 
-//     const connectWallet = async () => {
-//         try {
-//             // Check for Ethereum provider
-//             //@ts-ignore
-//             if (window.ethereum) {
-//                 // Request account access
-//                 //@ts-ignore
-//                 const accounts = await window.ethereum.request({ 
-//                     method: 'eth_requestAccounts' 
-//                 });
+    const connectWallet = async () => {
+        try {
+            // Check for Ethereum provider
+            //@ts-ignore
+            if (window.ethereum) {
+                // Request account access
+                //@ts-ignore
+                const accounts = await window.ethereum.request({ 
+                    method: 'eth_requestAccounts' 
+                });
                 
-//                 // Create new provider
-//                 //@ts-ignore
-//                 const newProvider = new ethers.BrowserProvider(window.ethereum);
+                // Create new provider
+                //@ts-ignore
+                const newProvider = new ethers.BrowserProvider(window.ethereum);
                 
-//                 // Get store state methods
-//                 const { setProvider, setAddress } = getStoreState();
+                // Get store state methods
+                const { setProvider, setAddress } = getStoreState();
                 
-//                 // Update store state
-//                 setProvider(newProvider);
-//                 setAddress(accounts[0]);
+                // Update store state
+                setProvider(newProvider);
+                setAddress(accounts[0]);
                 
-//                 console.log('Wallet connected:', accounts[0]);
-//                 return accounts[0];
-//             } else {
-//                 alert("Please install MetaMask!");
-//                 return null;
-//             }
-//         } catch (error) {
-//             console.error("Error connecting to MetaMask", error);
-//             return null;
-//         }
-//     };
+                console.log('Wallet connected:', accounts[0]);
+                return accounts[0];
+            } else {
+                alert("Please install MetaMask!");
+                return null;
+            }
+        } catch (error) {
+            console.error("Error connecting to MetaMask", error);
+            return null;
+        }
+    };
 
 //     const createCourse = async (title: string, description: string, startTime: string, endTime: string, price: string) => {
 //         try {
@@ -186,35 +186,35 @@
 //         }
 //     };
 
-//     const buyCourse = async (courseId: string, price : string) => {
-//         try {
-//             // Initialize contract
-//             const contract = await initEthereum();
+    const buyCourse = async (price : string) => {
+        try {
+            // Initialize contract
+            const contract = await initEthereum();
             
-//             if (!contract) {
-//                 console.log("MetaMask is not installed!");
-//                 return null;
-//             }
+            if (!contract) {
+                console.log("MetaMask is not installed!");
+                return null;
+            }
 
-//             console.log("price ",price)
+            console.log("price ",price)
             
-//             // Check if deleteCourse method exists
-//             if (typeof contract.buyCourse === 'function') {
-//                 const response = await contract.buyCourse(courseId, {
-//                     value: ethers.parseEther(price.toString())
-//                 });
+            // Check if deleteCourse method exists
+            if (typeof contract.buyCourse === 'function') {
+                const response = await contract.buyCourse({
+                    value: ethers.parseEther(price.toString())
+                });
                 
-//                 console.log('Course Bought:', response);
-//                 return response;
-//             } else {
-//                 console.error('buyCourse is not a function on the contract');
-//                 return null;
-//             }
-//         } catch (error) {
-//             console.error("Error buying course:", error);
-//             return null;
-//         }
-//     };
+                console.log('Course Bought:', response);
+                return response;
+            } else {
+                console.error('buyCourse is not a function on the contract');
+                return null;
+            }
+        } catch (error) {
+            console.error("Error buying course:", error);
+            return null;
+        }
+    };
 
 //     const removeCourse = async (courseId: string) => {
 //         try {
@@ -300,15 +300,15 @@
 //     };
 
 
-//     // Return methods
-//     return {
-//         connectWallet,
-//         createCourse,
-//         deleteCourse,
-//         getMyCoursesInstructor,
-//         buyCourse,
-//         removeCourse,
-//         getMyCoursesLearner,
-//         getAllCourses
-//     };
-// };
+    // Return methods
+    return {
+        connectWallet,
+        // createCourse,
+        // deleteCourse,
+        // getMyCoursesInstructor,
+        buyCourse,
+        // removeCourse,
+        // getMyCoursesLearner,
+        // getAllCourses
+    };
+};

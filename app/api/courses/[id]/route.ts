@@ -1,11 +1,11 @@
 // app/api/courses/route.ts
-import { NextResponse } from 'next/server'
+import { NextResponse, NextRequest } from 'next/server'
 import { PrismaClient } from '@prisma/client'
 
 const prisma = new PrismaClient()
 
 export const GET = async( 
-  req: Request,
+  req: NextRequest,
   { params }: { params: { id: string } }
 ) =>  {
   try {
@@ -38,3 +38,114 @@ export const GET = async(
     )
   }
 }
+
+export async function POST(req: Request,
+    { params }: { params: { id: string } }
+) {
+    try {
+        const courseId = parseInt(params.id)
+      const body = await req.json()
+      const { learnerAddress, transactionHash } = body
+  
+      // Validate inputs
+     
+  
+      if (!courseId || !transactionHash) {
+        return NextResponse.json(
+          { error: 'Missing required fields' },
+          { status: 400 }
+        )
+      }
+  
+      // Check if learner exists
+      const learner = await prisma.learner.findUnique({
+        where: { walletAddress: learnerAddress },
+      })
+  
+      if (!learner) {
+        return NextResponse.json(
+          { error: 'Learner not found' },
+          { status: 404 }
+        )
+      }
+  
+      // Check if course exists and is active
+      const course = await prisma.course.findUnique({
+        where: { id: courseId },
+      })
+  
+      if (!course) {
+        return NextResponse.json(
+          { error: 'Course not found' },
+          { status: 404 }
+        )
+      }
+  
+      if (!course.isActive) {
+        return NextResponse.json(
+          { error: 'Course is not active' },
+          { status: 400 }
+        )
+      }
+  
+      // Check if enrollment already exists
+      const existingEnrollment = await prisma.enrollment.findUnique({
+        where: {
+          learnerAddress_courseId: {
+            learnerAddress,
+            courseId,
+          },
+        },
+      })
+  
+      if (existingEnrollment) {
+        return NextResponse.json(
+          { error: 'Already enrolled in this course' },
+          { status: 400 }
+        )
+      }
+  
+      // Check if transaction hash is unique
+      const existingTransaction = await prisma.enrollment.findUnique({
+        where: { transactionHash },
+      })
+  
+      if (existingTransaction) {
+        return NextResponse.json(
+          { error: 'Transaction already processed' },
+          { status: 400 }
+        )
+      }
+  
+      // Create enrollment
+      const enrollment = await prisma.enrollment.create({
+        data: {
+          learnerAddress,
+          courseId,
+          transactionHash,
+          progress: 0,
+          enrolledAt: new Date(),
+        },
+        include: {
+          course: {
+            select: {
+              title: true,
+              startTime: true,
+              endTime: true,
+            },
+          },
+        },
+      })
+  
+      return NextResponse.json({
+        message: 'Successfully enrolled in course',
+        enrollment,
+      })
+    } catch (error) {
+      console.error('Error enrolling in course:', error)
+      return NextResponse.json(
+        { error: 'Failed to enroll in course' },
+        { status: 500 }
+      )
+    }
+  }

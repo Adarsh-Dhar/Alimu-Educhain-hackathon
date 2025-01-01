@@ -54,27 +54,19 @@ export function CreateCourse() {
         const start_date = convertDateToTimestamp(startDate.toString())
         const end_date = convertDateToTimestamp(endDate.toString())
         
-        // First create course in smart contract
-        // await createCourse(
-        //   title, 
-        //   description, 
-        //   start_date.toString(), 
-        //   end_date.toString(), 
-        //   price.toString()
-        // )
+       console.log("title", title)
+       console.log("description", description)
+       console.log("start date", new Date(start_date * 1000).toISOString())
+       console.log("end date", new Date(end_date * 1000).toISOString())
+       console.log("price", price)
 
         // Then save to backend
-        await axios.post('/api/courses', {
+        await axios.post('http://localhost:3000/api/courses', {
           title,
           description,
           startTime: new Date(start_date * 1000).toISOString(),
           endTime: new Date(end_date * 1000).toISOString(),
-          price: price * 1e18, // Convert to wei
-          teacher: "", // You might want to get this from your auth context
-          stakedAmount: 0,
-          yieldClaimed: 0,
-          fundsWithdrawn: false,
-          isActive: true
+          price: price, // Convert to wei
         })
 
         toast({

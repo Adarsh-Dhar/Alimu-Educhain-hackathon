@@ -1,7 +1,5 @@
 import { NextResponse, NextRequest } from 'next/server'
 import { PrismaClient } from '@prisma/client'
-import { CourseSchema } from '../route'
-import { z } from 'zod'
 
 const prisma = new PrismaClient()
 
@@ -26,6 +24,14 @@ export const GET = async () => {
   export const POST = async (req: NextRequest) => {
     try {
       const body = await req.json()
+
+      const courseData = {
+        title: body.title,
+        description: body.description,
+        startTime: new Date(body.startTime),
+        endTime: new Date(body.endTime),
+        price: body.price,
+      }
       
       // Validate request body
     //   const validatedData = CourseSchema.parse(body)
@@ -33,20 +39,12 @@ export const GET = async () => {
       // Convert string dates to Date objects
       const course = await prisma.course.create({
         data: {
-          ...body,
-          startTime: new Date(body.startTime),
-          endTime: new Date(body.endTime)
+          ...courseData,
         }
       })
       
       return NextResponse.json(course, { status: 201 })
     } catch (error) {
-      if (error instanceof z.ZodError) {
-        return NextResponse.json(
-          { error: 'Invalid request data', details: error.errors },
-          { status: 400 }
-        )
-      }
       
       console.error('Error creating course:', error)
       return NextResponse.json(

@@ -15,14 +15,14 @@ datasource db {
 
 model Course {
   id   Int    @id @default(autoincrement())
-  title String
-  description String
-  startTime DateTime
-  endTime DateTime
-  price Int
-  teacher String
-  stakedAmount Int
-  yieldClaimed Int
-  fundsWithdrawn Boolean
-  isActive Boolean
+  title String 
+  description String 
+  startTime DateTime 
+  endTime DateTime 
+  price Int 
+  teacher String @default("")
+  stakedAmount Int @default(0)
+  yieldClaimed Int @default(0)
+  fundsWithdrawn Boolean @default(false)
+  isActive Boolean @default(true)
 }

@@ -1,0 +1,6 @@
+-- AlterTable
+ALTER TABLE "Course" ADD COLUMN     "fundsWithdrawn" BOOLEAN NOT NULL DEFAULT false,
+ADD COLUMN     "isActive" BOOLEAN NOT NULL DEFAULT true,
+ADD COLUMN     "stakedAmount" INTEGER NOT NULL DEFAULT 0,
+ADD COLUMN     "teacher" TEXT NOT NULL DEFAULT '',
+ADD COLUMN     "yieldClaimed" INTEGER NOT NULL DEFAULT 0;

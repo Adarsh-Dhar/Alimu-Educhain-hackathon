@@ -1,9 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -14,15 +8,67 @@ datasource db {
 }
 
 model Course {
-  id   Int    @id @default(autoincrement())
-  title String 
-  description String 
-  startTime DateTime 
-  endTime DateTime 
-  price Int 
-  teacher String @default("")
-  stakedAmount Int @default(0)
-  yieldClaimed Int @default(0)
-  fundsWithdrawn Boolean @default(false)
-  isActive Boolean @default(true)
+  id              Int       @id @default(autoincrement())
+  title           String    
+  description     String    
+  startTime       DateTime  
+  endTime         DateTime  
+  price           Int       
+  stakedAmount    Int       @default(0)
+  yieldClaimed    Int       @default(0)
+  fundsWithdrawn  Boolean   @default(false)
+  isActive        Boolean   @default(true)
+  
+  // Relationship with Instructor using Ethereum address
+  instructorAddress String  @default("")
+  instructor        Instructor @relation(fields: [instructorAddress], references: [walletAddress])
+  
+  // Many-to-many relationship with Learners through Enrollment
+  enrollments       Enrollment[]
+  
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @default(now())
+}
+
+model Learner {
+  walletAddress    String    @id
+  name             String?   // Optional profile name
+  
+  // Many-to-many relationship with Courses through Enrollment
+  enrollments      Enrollment[]
+  
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @default(now())
+}
+
+model Instructor {
+  walletAddress    String    @id
+  name             String?   // Optional profile name
+  bio              String?   // Optional instructor bio
+  
+  // One-to-many relationship with Courses
+  courses          Course[]
+  
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @default(now())
+}
+
+model Enrollment {
+  id               Int       @id @default(autoincrement())
+  learnerAddress   String
+  courseId         Int
+  
+  // Relationship fields
+  learner          Learner   @relation(fields: [learnerAddress], references: [walletAddress])
+  course           Course    @relation(fields: [courseId], references: [id])
+  
+  // Enrollment details
+  enrolledAt       DateTime  @default(now())
+  completedAt      DateTime?
+  progress         Int       @default(0)
+  
+  // Blockchain transaction details
+  transactionHash  String?   @unique
+  
+  @@unique([learnerAddress, courseId])
 }
